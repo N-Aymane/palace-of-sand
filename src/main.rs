@@ -1,7 +1,7 @@
 //! Pixel renderer and browser/native platform adapter.
 use macroquad::audio::{Sound, load_sound_from_bytes, play_sound_once};
 use macroquad::prelude::*;
-use palace_of_sand::level::{COLS, Level, Tile, floor_y, tile_center};
+use palace_of_sand::level::{COLS, Level, Tile, floor_y};
 use palace_of_sand::{DT, Event, Game, Input, Phase, PlayerState};
 
 const INK: Color = Color::from_rgba(14, 14, 23, 255);

@@ -30,3 +30,11 @@ Validation: dependency resolution completed; native compilation reached the link
 - Added a build script that copies the exact JavaScript loader shipped with the pinned Macroquad crate.
 
 Validation: browser and renderer compilation checks are now running in Linux CI; no original graphics or sound were imported.
+
+## 4 — Verification pass
+
+- Linux CI passed all ten native simulation/geometry tests and library Clippy.
+- The WASM renderer compiled; its strict lint check found one unused import, now removed.
+- Added automated Chromium and WebKit checks for desktop, landscape touch, and portrait touch layouts, including screenshots, startup, input, and browser-error assertions.
+
+Validation is ongoing. Full browser results and deployment URLs will be recorded after the checks complete.

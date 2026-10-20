@@ -21,8 +21,18 @@ jobs:
       - run: cargo clippy --locked --lib -- -D warnings
       - run: cargo clippy --locked --target wasm32-unknown-unknown --features renderer -- -D warnings
       - run: node scripts/build.mjs
+      - name: Browser verification
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium webkit
+          npm run test:browser
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: palace-of-sand-web
           path: dist/
           if-no-files-found: error
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: browser-verification
+          path: test-results/
