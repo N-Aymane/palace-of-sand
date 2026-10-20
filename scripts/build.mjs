@@ -13,7 +13,7 @@ if(existsSync(join(local,'bin',process.platform==='win32'?'cargo.exe':'cargo')))
   cargo=join(local,'bin',process.platform==='win32'?'cargo.exe':'cargo');
 }
 execFileSync(cargo,['build','--locked','--release','--target','wasm32-unknown-unknown','--features','renderer'],{cwd:root,env,stdio:'inherit'});
-const metadata=JSON.parse(execFileSync(cargo,['metadata','--format-version','1','--locked'],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024}));
+const metadata=JSON.parse(execFileSync(cargo,['metadata','--format-version','1','--locked','--features','renderer'],{cwd:root,env,encoding:'utf8',maxBuffer:8*1024*1024}));
 const macroquad=metadata.packages.find(p=>p.name==='macroquad'&&p.version==='0.4.14');
 if(!macroquad) throw new Error('matching Macroquad package is missing');
 const dist=join(root,'dist');mkdirSync(dist,{recursive:true});

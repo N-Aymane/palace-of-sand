@@ -2,12 +2,14 @@
 use palace_of_sand::level::Level;
 use palace_of_sand::{Game, Input, Phase, PlayerState};
 
+#[track_caller]
 fn advance(g: &mut Game, input: Input, ticks: usize) {
     for _ in 0..ticks {
         g.step(input);
         assert_ne!(g.phase, Phase::Dead, "died: {:?}", g.player);
     }
 }
+#[track_caller]
 fn until(g: &mut Game, input: Input, goal: impl Fn(&Game) -> bool) {
     for _ in 0..900 {
         if goal(g) {
@@ -67,7 +69,29 @@ fn opening_level_can_be_completed_using_only_controls() {
     until(&mut g, right(), |g| g.player.x > 80.0);
     settle(&mut g);
     until(&mut g, left(), |g| g.player.room == 8 && g.player.x < 245.0);
-    until(&mut g, left(), |g| g.player.x < 179.0);
+    settle(&mut g);
+    until(
+        &mut g,
+        Input {
+            left: true,
+            action: true,
+            ..Input::default()
+        },
+        |g| g.player.x < 200.0,
+    );
+    advance(
+        &mut g,
+        Input {
+            left: true,
+            down: true,
+            action: true,
+            ..Input::default()
+        },
+        1,
+    );
+    until(&mut g, Input::default(), |g| {
+        g.player.grounded && g.player.y > 120.0
+    });
     settle(&mut g);
     until(&mut g, right(), |g| g.player.x > 240.0);
     settle(&mut g);

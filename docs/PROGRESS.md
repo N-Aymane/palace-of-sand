@@ -52,3 +52,6 @@ Validation is ongoing. Full browser results and deployment URLs will be recorded
 - All twelve focused tests pass. The first full replay exposed a missing jump in its room 6 route; the replay now jumps the spike shaft and steps on its gate opener.
 - Fixed Vercel's build bootstrap to handle its preinstalled Cargo installation without assuming a `$HOME/.cargo/env` file.
 - CI preserves browser/build artifacts even when a simulation test fails, while still marking the overall run failed.
+
+- The next replay reached room 8 and exposed an unsafe running drop into its lower shaft. Added a deliberate Shift+Down edge drop and updated the replay to descend onto the middle ledge before opening room 7's gate.
+- The release WASM compiled successfully. Corrected asset packaging to include the renderer feature when locating Macroquad's matching JavaScript loader.

@@ -405,7 +405,7 @@ impl Game {
             && !combat
             && !self.support(
                 self.player.room,
-                next_x + f32::from(self.player.facing) * 5.0,
+                next_x + f32::from(self.player.facing) * if input.down { 12.0 } else { 5.0 },
                 self.player.y,
             )
         {
