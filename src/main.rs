@@ -105,7 +105,7 @@ async fn main() {
         Ok(l) => l,
         Err(error) => loop {
             clear_background(INK);
-            draw_text(&error, 20.0, 60.0, 18.0, RED);
+            draw_crisp_text(&error, 20.0, 60.0, 18.0, RED);
             next_frame().await;
         },
     };
@@ -114,7 +114,7 @@ async fn main() {
         Ok(art) => art,
         Err(error) => loop {
             clear_background(INK);
-            draw_text(&error, 12.0, 35.0, 16.0, RED);
+            draw_crisp_text(&error, 12.0, 35.0, 16.0, RED);
             next_frame().await;
         },
     };
@@ -326,7 +326,7 @@ fn draw_hud(game: &Game, muted: bool, paused: bool) {
             },
         );
     }
-    draw_text("I / THE DUNGEON", 44.0, 9.0, 8.0, GOLD);
+    draw_crisp_text("I / THE DUNGEON", 44.0, 9.0, 8.0, GOLD);
     let remaining = 3600 - game.elapsed_ticks / 60;
     center(
         &format!("{:02}:{:02}", remaining / 60, remaining % 60),
@@ -334,13 +334,13 @@ fn draw_hud(game: &Game, muted: bool, paused: bool) {
         9.0,
         LIGHT,
     );
-    draw_text("RST", 241.0, 9.0, 7.0, EDGE);
-    draw_text(if muted { "OFF" } else { "SND" }, 270.0, 9.0, 7.0, EDGE);
-    draw_text(if paused { ">" } else { "II" }, 300.0, 9.0, 9.0, GOLD);
+    draw_crisp_text("RST", 241.0, 9.0, 7.0, EDGE);
+    draw_crisp_text(if muted { "OFF" } else { "SND" }, 270.0, 9.0, 7.0, EDGE);
+    draw_crisp_text(if paused { ">" } else { "II" }, 300.0, 9.0, 9.0, GOLD);
 }
 fn center(text: &str, y: f32, size: f32, color: Color) {
-    let width = measure_text(text, None, size as u16, 1.0).width;
-    draw_text(text, (320.0 - width) / 2.0, y, size, color);
+    let width = measure_text(text, None, (size * 4.0) as u16, 0.25).width;
+    draw_crisp_text(text, (320.0 - width) / 2.0, y, size, color);
 }
 fn draw_overlay(game: &Game, screen: Screen) {
     draw_rectangle(
@@ -451,8 +451,8 @@ fn draw_touch_controls(input: Input) {
         );
         draw_rectangle_lines(r.x, r.y, r.w, r.h, 1.0, if pressed { LIGHT } else { STONE });
         let size = if label.len() > 1 { 9.0 } else { 16.0 };
-        let width = measure_text(label, None, size as u16, 1.0).width;
-        draw_text(
+        let width = measure_text(label, None, (size * 4.0) as u16, 0.25).width;
+        draw_crisp_text(
             label,
             r.x + (r.w - width) / 2.0,
             r.y + r.h / 2.0 + size * 0.35,
@@ -460,6 +460,21 @@ fn draw_touch_controls(input: Input) {
             if pressed { INK } else { GOLD },
         );
     }
-    draw_text("HOLD ACTION", 137.0, 226.0, 7.0, EDGE);
-    draw_text("TO STEP SAFELY", 132.0, 237.0, 7.0, EDGE);
+    draw_crisp_text("HOLD ACTION", 137.0, 226.0, 7.0, EDGE);
+    draw_crisp_text("TO STEP SAFELY", 132.0, 237.0, 7.0, EDGE);
+}
+
+// Rasterize labels at render-target density, then scale in simulation coordinates.
+fn draw_crisp_text(text: &str, x: f32, y: f32, size: f32, color: Color) {
+    draw_text_ex(
+        text,
+        x,
+        y,
+        TextParams {
+            font_size: (size * 4.0) as u16,
+            font_scale: 0.25,
+            color,
+            ..Default::default()
+        },
+    );
 }

@@ -101,3 +101,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Documented all generated runtime assets in `assets/art/README.md`. Gameplay collision geometry remains independent of artwork.
 
 - Startup verification: observe both WebGL log and info channels so the cinematic asset-ready signal dismisses the loading overlay.
+
+- Visual QA found low-resolution HUD glyphs against the new artwork. Labels now rasterize at four times the simulation density to match the 1280-pixel render target. Local Edge desktop and touch checks passed; the live local tab shows cinematic artwork.
