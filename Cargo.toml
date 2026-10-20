@@ -1,0 +1,36 @@
+[package]
+name = "palace-of-sand"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "A Rust and WebAssembly cinematic dungeon platformer"
+license = "MIT"
+
+[features]
+default = []
+renderer = ["dep:macroquad"]
+
+[dependencies]
+macroquad = { version = "=0.4.14", optional = true, features = ["audio"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[[bin]]
+name = "palace-of-sand"
+path = "src/main.rs"
+required-features = ["renderer"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+correctness = "deny"
+suspicious = "warn"
+perf = "warn"

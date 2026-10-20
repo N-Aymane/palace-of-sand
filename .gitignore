@@ -1,0 +1,8 @@
+/target/
+/.tools/
+/.reference/
+/.vercel/
+/dist/
+/node_modules/
+/test-results/
+*.log
