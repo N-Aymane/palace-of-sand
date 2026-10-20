@@ -1,0 +1,9 @@
+.git
+.tools
+.reference
+target
+node_modules
+test-results
+docs
+.github
+.cargo/rust-link.cmd

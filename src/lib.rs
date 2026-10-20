@@ -69,6 +69,8 @@ pub struct Player {
     pub invulnerable: u16,
     fall_distance: f32,
     hang_row: usize,
+    hang_room: u8,
+    hang_x: f32,
 }
 #[derive(Debug, Clone)]
 pub struct Guard {
@@ -140,6 +142,8 @@ impl Game {
                 invulnerable: 0,
                 fall_distance: 0.0,
                 hang_row: 0,
+                hang_room: start.room,
+                hang_x: 0.0,
             },
             guards,
             tiles,
@@ -180,19 +184,30 @@ impl Game {
             None
         }
     }
-    fn support(&self, room: u8, x: f32, y: f32) -> bool {
-        if !(0.0..ROOM_W).contains(&x) {
-            return false;
+    fn horizontal_point(&self, room: u8, x: f32) -> Option<(u8, f32)> {
+        if x < 0.0 {
+            let next = self.level.room(room).links[0];
+            (next != 0).then_some((next, x + ROOM_W))
+        } else if x >= ROOM_W {
+            let next = self.level.room(room).links[1];
+            (next != 0).then_some((next, x - ROOM_W))
+        } else {
+            Some((room, x))
         }
+    }
+    fn support(&self, room: u8, x: f32, y: f32) -> bool {
+        let Some((room, x)) = self.horizontal_point(room, x) else {
+            return false;
+        };
         (0..3).any(|r| {
             (floor_y(r) - y).abs() < 1.0
                 && self.tile(room, r * COLS + (x / TILE_W) as usize).supports()
         })
     }
     fn blocked(&self, room: u8, x: f32, y: f32) -> bool {
-        if !(0.0..ROOM_W).contains(&x) {
-            return false;
-        }
+        let Some((room, x)) = self.horizontal_point(room, x) else {
+            return true;
+        };
         let col = (x / TILE_W) as usize;
         for row in 0..3 {
             let top = floor_y(row) - TILE_H;
@@ -296,7 +311,8 @@ impl Game {
         if self.player.state == PlayerState::Climbing {
             if self.player.state_ticks >= 18 {
                 self.player.y = floor_y(self.player.hang_row);
-                self.player.x += f32::from(self.player.facing) * 14.0;
+                self.player.x = self.player.hang_x;
+                self.player.room = self.player.hang_room;
                 self.player.grounded = true;
                 self.player.fall_distance = 0.0;
                 self.set_state(PlayerState::Idle);
@@ -447,7 +463,12 @@ impl Game {
                 if self.support(p.room, ahead, floor_y(row))
                     && !self.blocked(p.room, ahead, floor_y(row))
                 {
+                    let destination = self.horizontal_point(p.room, ahead);
                     self.player.hang_row = row;
+                    if let Some((room, x)) = destination {
+                        self.player.hang_room = room;
+                        self.player.hang_x = x.clamp(8.0, ROOM_W - 8.0);
+                    }
                     self.player.grounded = false;
                     self.set_state(PlayerState::Climbing);
                     return true;
@@ -500,9 +521,9 @@ impl Game {
                         self.player.fall_distance = 0.0;
                         self.set_state(PlayerState::Idle);
                         self.events.push(Event::Land);
-                        if distance > 145.0 {
+                        if distance > 170.0 {
                             self.hurt(3);
-                        } else if distance > 85.0 {
+                        } else if distance > 110.0 {
                             self.hurt(1);
                         }
                         break;
@@ -520,6 +541,10 @@ impl Game {
                     {
                         self.player.y = ledge_y + HEIGHT;
                         self.player.hang_row = row;
+                        if let Some((room, x)) = self.horizontal_point(self.player.room, ahead) {
+                            self.player.hang_room = room;
+                            self.player.hang_x = x.clamp(8.0, ROOM_W - 8.0);
+                        }
                         self.player.vy = 0.0;
                         self.player.fall_distance = 0.0;
                         self.set_state(PlayerState::Hanging);
@@ -818,5 +843,41 @@ mod tests {
         }
         assert!(g.player.grounded);
         assert!((g.player.y - floor_y(1)).abs() < 0.1);
+    }
+    #[test]
+    fn climb_can_cross_a_room_boundary() {
+        let mut g = game();
+        place(&mut g, 2, 10);
+        g.player.x = 9.0;
+        g.player.facing = -1;
+        g.step(Input {
+            up: true,
+            ..Input::default()
+        });
+        assert_eq!(g.player.state, PlayerState::Climbing);
+        for _ in 0..19 {
+            g.step(Input::default());
+        }
+        assert_eq!(g.player.room, 6);
+        assert!(g.player.grounded);
+        assert_eq!(g.player.y, floor_y(0));
+    }
+    #[test]
+    fn potion_is_consumed_without_removing_the_floor() {
+        let mut g = game();
+        place(&mut g, 5, 23);
+        g.player.health = 1;
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        assert_eq!(g.player.health, 2);
+        g.step(Input::default());
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        assert_eq!(g.player.health, 2);
+        assert!(g.tile(5, 23).supports());
     }
 }

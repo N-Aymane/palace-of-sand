@@ -1,3 +1,7 @@
 [target.x86_64-pc-windows-gnu]
 linker = ".cargo/rust-link.cmd"
 rustflags = ["-C", "linker-flavor=ld", "-C", "link-self-contained=yes"]
+
+[target.wasm32-unknown-unknown]
+# Macroquad's browser functions are supplied by its matching JavaScript loader.
+rustflags = ["-C", "link-arg=--allow-undefined"]
