@@ -1,0 +1,522 @@
+{
+  "reference": "SDLPoP 3c5add5fb7f83d4ceb542823ab66d00146c4271b / res2001.bin",
+  "sha256": "ae8dd7787c65e2ecd2a21c6126c751c47e9a614edde0a80af0c86d8afeadc06c",
+  "start": {
+    "room": 1,
+    "tile": 0,
+    "facing": -1
+  },
+  "rooms": [
+    {
+      "id": 1,
+      "links": [
+        5,
+        0,
+        0,
+        2
+      ],
+      "rows": [
+        "   .....##",
+        "**.o #####",
+        "####bol..#"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 2,
+      "links": [
+        6,
+        3,
+        1,
+        0
+      ],
+      "rows": [
+        "  ####  ##",
+        "*.o*.o..o.",
+        "##########"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 3,
+      "links": [
+        2,
+        9,
+        0,
+        0
+      ],
+      "rows": [
+        "##########",
+        "o..*.*...o",
+        "##########"
+      ],
+      "switches": [],
+      "guard": {
+        "tile": 17,
+        "facing": -1
+      }
+    },
+    {
+      "id": 4,
+      "links": [
+        19,
+        14,
+        20,
+        0
+      ],
+      "rows": [
+        "##### ####",
+        "o*.o   ###",
+        "####..b###"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 5,
+      "links": [
+        21,
+        1,
+        0,
+        6
+      ],
+      "rows": [
+        "o*-*+g+ .g",
+        "######o ##",
+        "##*p.lob##"
+      ],
+      "switches": [
+        {
+          "tile": 2,
+          "opens": false,
+          "targets": [
+            {
+              "room": 5,
+              "tile": 9
+            }
+          ]
+        },
+        {
+          "tile": 4,
+          "opens": true,
+          "targets": [
+            {
+              "room": 5,
+              "tile": 9
+            },
+            {
+              "room": 5,
+              "tile": 5
+            }
+          ]
+        },
+        {
+          "tile": 6,
+          "opens": true,
+          "targets": [
+            {
+              "room": 5,
+              "tile": 9
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 6,
+      "links": [
+        8,
+        2,
+        5,
+        0
+      ],
+      "rows": [
+        "*.+ o..*.o",
+        "### ######",
+        "###ss#####"
+      ],
+      "switches": [
+        {
+          "tile": 2,
+          "opens": true,
+          "targets": [
+            {
+              "room": 8,
+              "tile": 9
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 7,
+      "links": [
+        20,
+        8,
+        17,
+        14
+      ],
+      "rows": [
+        "  +.ollo*g",
+        "*.o.o  ###",
+        "###lo..o.#"
+      ],
+      "switches": [
+        {
+          "tile": 2,
+          "opens": true,
+          "targets": [
+            {
+              "room": 7,
+              "tile": 9
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 8,
+      "links": [
+        7,
+        6,
+        21,
+        11
+      ],
+      "rows": [
+        "      +..g",
+        "**.l .o+.#",
+        "###  #####"
+      ],
+      "switches": [
+        {
+          "tile": 6,
+          "opens": true,
+          "targets": [
+            {
+              "room": 8,
+              "tile": 9
+            }
+          ]
+        },
+        {
+          "tile": 17,
+          "opens": true,
+          "targets": [
+            {
+              "room": 7,
+              "tile": 9
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 9,
+      "links": [
+        3,
+        0,
+        0,
+        0
+      ],
+      "rows": [
+        "+        #",
+        "o.*xe*...#",
+        "##########"
+      ],
+      "switches": [
+        {
+          "tile": 0,
+          "opens": true,
+          "targets": [
+            {
+              "room": 9,
+              "tile": 13
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 10,
+      "links": [
+        0,
+        19,
+        15,
+        0
+      ],
+      "rows": [
+        "#  ..obo #",
+        "#  #####bo",
+        "#ss#######"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 11,
+      "links": [
+        14,
+        0,
+        8,
+        0
+      ],
+      "rows": [
+        "###  #####",
+        "###   ####",
+        "oko.b.####"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 12,
+      "links": [
+        15,
+        20,
+        16,
+        19
+      ],
+      "rows": [
+        ".ll+  .o.g",
+        "o..#  ####",
+        "####s ####"
+      ],
+      "switches": [
+        {
+          "tile": 3,
+          "opens": true,
+          "targets": [
+            {
+              "room": 12,
+              "tile": 9
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 13,
+      "links": [
+        22,
+        16,
+        0,
+        18
+      ],
+      "rows": [
+        "o.*.*s*..o",
+        "##########",
+        "##########"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 14,
+      "links": [
+        4,
+        11,
+        7,
+        0
+      ],
+      "rows": [
+        "###.op*  #",
+        "######o  #",
+        "#######sso"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 15,
+      "links": [
+        0,
+        12,
+        22,
+        10
+      ],
+      "rows": [
+        "o    o....",
+        "o    o**.o",
+        "#.wkbo ###"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 16,
+      "links": [
+        22,
+        23,
+        0,
+        12
+      ],
+      "rows": [
+        "o ########",
+        "#bo ######",
+        "###.os*.l."
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 17,
+      "links": [
+        23,
+        21,
+        0,
+        7
+      ],
+      "rows": [
+        "#   .....o",
+        "o**.oll###",
+        "##opo..###"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 18,
+      "links": [
+        15,
+        12,
+        13,
+        19
+      ],
+      "rows": [
+        "##########",
+        "####...*.o",
+        "##########"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 19,
+      "links": [
+        10,
+        4,
+        12,
+        0
+      ],
+      "rows": [
+        "##### ####",
+        "o**.oso*.o",
+        "##########"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 20,
+      "links": [
+        12,
+        7,
+        23,
+        4
+      ],
+      "rows": [
+        "          ",
+        "*.*.-l.+..",
+        "##### ####"
+      ],
+      "switches": [
+        {
+          "tile": 14,
+          "opens": false,
+          "targets": [
+            {
+              "room": 12,
+              "tile": 9
+            }
+          ]
+        },
+        {
+          "tile": 17,
+          "opens": true,
+          "targets": [
+            {
+              "room": 12,
+              "tile": 9
+            }
+          ]
+        }
+      ],
+      "guard": null
+    },
+    {
+      "id": 21,
+      "links": [
+        17,
+        5,
+        0,
+        8
+      ],
+      "rows": [
+        "o..*.*...o",
+        "##########",
+        "##########"
+      ],
+      "switches": [],
+      "guard": {
+        "tile": 6,
+        "facing": -1
+      }
+    },
+    {
+      "id": 22,
+      "links": [
+        0,
+        16,
+        0,
+        15
+      ],
+      "rows": [
+        "#    op*..",
+        "o    #####",
+        "o    #####"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 23,
+      "links": [
+        16,
+        17,
+        0,
+        20
+      ],
+      "rows": [
+        "##########",
+        "####  o*.o",
+        "o*.obb####"
+      ],
+      "switches": [],
+      "guard": null
+    },
+    {
+      "id": 24,
+      "links": [
+        9,
+        0,
+        0,
+        0
+      ],
+      "rows": [
+        "        ##",
+        "*.*..s..##",
+        "##########"
+      ],
+      "switches": [],
+      "guard": null
+    }
+  ]
+}

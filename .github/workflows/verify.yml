@@ -1,0 +1,28 @@
+name: Verify and build
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prepare Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component rustfmt --component clippy
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
+      - run: cargo fmt --check
+      - run: cargo test --locked --lib
+      - run: cargo clippy --locked --lib -- -D warnings
+      - run: cargo clippy --locked --target wasm32-unknown-unknown --features renderer -- -D warnings
+      - run: node scripts/build.mjs
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: palace-of-sand-web
+          path: dist/
+          if-no-files-found: error
