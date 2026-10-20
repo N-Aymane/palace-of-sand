@@ -67,3 +67,11 @@ Validation is ongoing. Full browser results and deployment URLs will be recorded
 - Added a Vercel Build Output API packager that serves the exact tested CI artifact without recompiling on the host.
 - Documented local port 4173, artifact retrieval, preview deployment, staged production, and promotion.
 - Kept credentials and OIDC files outside version control and upload inputs.
+
+### Passing end-to-end baseline
+
+GitHub run `39441734228` passed formatting, all 13 simulation/geometry tests (including the full input-only escape), library/WASM Clippy, release compilation, and all four Chromium/WebKit browser scenarios.
+
+Visual inspection of its mobile screenshots found inverted touch-control rendering despite passing runtime checks. Moved touch controls into the same pixel render target as the game to make their orientation and hit areas consistent.
+
+The first verified-artifact Vercel preview reached READY at https://palace-of-sand-c57tqsipz-aymanes-projects-2dbeb6ea.vercel.app. Production promotion waits for the mobile visual correction.

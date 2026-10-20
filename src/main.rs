@@ -108,8 +108,10 @@ async fn main() {
         },
     };
     let mut game = Game::new(level);
-    let target = render_target(320, 200);
-    target.texture.set_filter(FilterMode::Nearest);
+    let desktop_target = render_target(320, 200);
+    let touch_target = render_target(320, 264);
+    desktop_target.texture.set_filter(FilterMode::Nearest);
+    touch_target.texture.set_filter(FilterMode::Nearest);
     let mut audio: Option<Audio> = None;
     let mut audio_attempted = false;
     let mut muted = false;
@@ -118,6 +120,11 @@ async fn main() {
     loop {
         let touch_layout = screen_width() / screen_height() < 1.45;
         let virtual_h = if touch_layout { 264.0 } else { 200.0 };
+        let target = if touch_layout {
+            &touch_target
+        } else {
+            &desktop_target
+        };
         let scale = (screen_width() / 320.0).min(screen_height() / virtual_h);
         let offset = vec2(
             (screen_width() - 320.0 * scale) / 2.0,
@@ -226,13 +233,16 @@ async fn main() {
         }
         set_camera(&Camera2D {
             render_target: Some(target.clone()),
-            ..Camera2D::from_display_rect(Rect::new(0.0, 0.0, 320.0, 200.0))
+            ..Camera2D::from_display_rect(Rect::new(0.0, 0.0, 320.0, virtual_h))
         });
         clear_background(INK);
         draw_room(&game);
         draw_hud(&game, muted, screen == Screen::Paused);
         if screen != Screen::Playing || game.phase != Phase::Playing {
             draw_overlay(&game, screen);
+        }
+        if touch_layout {
+            draw_touch_controls(input);
         }
         set_default_camera();
         clear_background(Color::from_rgba(9, 9, 14, 255));
@@ -242,21 +252,11 @@ async fn main() {
             offset.y,
             WHITE,
             DrawTextureParams {
-                dest_size: Some(vec2(320.0 * scale, 200.0 * scale)),
+                dest_size: Some(vec2(320.0 * scale, virtual_h * scale)),
                 flip_y: true,
                 ..Default::default()
             },
         );
-        if touch_layout {
-            set_camera(&Camera2D::from_display_rect(Rect::new(
-                -offset.x / scale,
-                -offset.y / scale,
-                screen_width() / scale,
-                screen_height() / scale,
-            )));
-            draw_touch_controls(input);
-            set_default_camera();
-        }
         next_frame().await;
     }
 }
