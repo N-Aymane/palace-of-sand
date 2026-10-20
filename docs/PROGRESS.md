@@ -77,3 +77,10 @@ Visual inspection of its mobile screenshots found inverted touch-control renderi
 The first verified-artifact Vercel preview reached READY at https://palace-of-sand-c57tqsipz-aymanes-projects-2dbeb6ea.vercel.app. Production promotion waits for the mobile visual correction.
 
 - Added origin-scoped OIDC support to the browser verification script for testing protected Vercel previews with existing local authentication; no protection settings are weakened.
+
+## 6 — User-requested visual refresh
+
+- The corrected mobile-controls build passed CI run `39442474632` and is now the local port-4173 preview.
+- Verified the protected Vercel preview in desktop Chromium using existing origin-scoped authentication.
+- User requested smoother animation and more realistic graphics through Product Design. Reviewed the current game and generated three screenshot-grounded art directions; selection is pending before implementing the new assets.
+- See `docs/DESIGN_REFRESH.md` for the brief, concept order, and animation requirements. Production release will incorporate the selected visual direction.
