@@ -60,6 +60,12 @@ fn opening_level_can_be_completed_using_only_controls() {
     until(&mut g, left(), |g| g.player.x < 10.0);
     climb(&mut g);
     assert_eq!(g.player.room, 6);
+    until(&mut g, left(), |g| g.player.x < 146.0);
+    jump(&mut g, left());
+    until(&mut g, Input::default(), |g| g.player.grounded);
+    settle(&mut g);
+    until(&mut g, right(), |g| g.player.x > 80.0);
+    settle(&mut g);
     until(&mut g, left(), |g| g.player.room == 8 && g.player.x < 245.0);
     until(&mut g, left(), |g| g.player.x < 179.0);
     settle(&mut g);

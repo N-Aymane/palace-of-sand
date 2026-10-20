@@ -17,16 +17,20 @@ jobs:
           rustup default stable
           rustup target add wasm32-unknown-unknown
       - run: cargo fmt --check
-      - run: cargo test --locked --lib --tests
+      - id: simulation
+        continue-on-error: true
+        run: cargo test --locked --lib --tests
       - run: cargo clippy --locked --lib -- -D warnings
       - run: cargo clippy --locked --target wasm32-unknown-unknown --features renderer -- -D warnings
-      - run: node scripts/build.mjs
+      - id: build
+        run: node scripts/build.mjs
       - name: Browser verification
         run: |
           npm ci
           npx playwright install --with-deps chromium webkit
           npm run test:browser
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always() && steps.build.outcome == 'success'
         with:
           name: palace-of-sand-web
           path: dist/
@@ -36,3 +40,6 @@ jobs:
         with:
           name: browser-verification
           path: test-results/
+      - name: Require simulation success
+        if: always() && steps.simulation.outcome != 'success'
+        run: exit 1

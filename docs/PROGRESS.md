@@ -45,3 +45,10 @@ Validation is ongoing. Full browser results and deployment URLs will be recorded
 - Corrected ledge climbing across room boundaries and added a regression test for the room 2 → room 6 ascent.
 - Made consumed potions retain their supporting floor and added a regression test.
 - Created the Vercel project using existing CLI authentication after the connector returned a scope-access denial.
+
+### Full-route verification
+
+- Added an input-only integration replay that traverses the opening level, acquires the sword, returns, fights, and opens the exit.
+- All twelve focused tests pass. The first full replay exposed a missing jump in its room 6 route; the replay now jumps the spike shaft and steps on its gate opener.
+- Fixed Vercel's build bootstrap to handle its preinstalled Cargo installation without assuming a `$HOME/.cargo/env` file.
+- CI preserves browser/build artifacts even when a simulation test fails, while still marking the overall run failed.
