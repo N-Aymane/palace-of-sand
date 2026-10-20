@@ -59,3 +59,5 @@ Validation is ongoing. Full browser results and deployment URLs will be recorded
 - Browser diagnostics found Macroquad 0.4.14's bundled JavaScript lacks framebuffer functions used by its resolved Miniquad 0.4.8 dependency. The build now composes `gl.js` and the audio plugin directly from the exact locked Miniquad and quad-snd crates.
 - Corrected commit attribution to the authenticated GitHub account's numeric no-reply address for Vercel deployment checks. Existing milestone history is preserved.
 - The input-only replay now reaches the sword and return route; added a return jump over the slabs that crumbled on the outbound journey.
+
+- Enabled WebGL 2 explicitly: the locked renderer's framebuffer resolve path calls WebGL 2 functions. Chromium diagnostics identified the default WebGL 1 context as the remaining startup error.

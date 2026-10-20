@@ -17,6 +17,10 @@ fn conf() -> Conf {
         window_height: 600,
         high_dpi: true,
         sample_count: 1,
+        platform: miniquad::conf::Platform {
+            webgl_version: miniquad::conf::WebGLVersion::WebGL2,
+            ..Default::default()
+        },
         ..Default::default()
     }
 }
