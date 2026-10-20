@@ -25,5 +25,6 @@ Arrow keys move, jump/climb, and crouch. Shift is careful step / grab / pickup /
 - [Milestones](docs/PROGRESS.md)
 - [Reference evidence and fidelity](docs/REFERENCES.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Local preview and deployment](docs/DEPLOYMENT.md)
 
 This is an unofficial fan project. Newly authored code and artwork are MIT licensed; reference material retains its original ownership. No original executable, graphics, or sound files are distributed.

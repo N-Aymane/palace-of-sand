@@ -61,3 +61,9 @@ Validation is ongoing. Full browser results and deployment URLs will be recorded
 - The input-only replay now reaches the sword and return route; added a return jump over the slabs that crumbled on the outbound journey.
 
 - Enabled WebGL 2 explicitly: the locked renderer's framebuffer resolve path calls WebGL 2 functions. Chromium diagnostics identified the default WebGL 1 context as the remaining startup error.
+
+## 5 — Reproducible release packaging
+
+- Added a Vercel Build Output API packager that serves the exact tested CI artifact without recompiling on the host.
+- Documented local port 4173, artifact retrieval, preview deployment, staged production, and promotion.
+- Kept credentials and OIDC files outside version control and upload inputs.
