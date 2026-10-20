@@ -55,3 +55,7 @@ Validation is ongoing. Full browser results and deployment URLs will be recorded
 
 - The next replay reached room 8 and exposed an unsafe running drop into its lower shaft. Added a deliberate Shift+Down edge drop and updated the replay to descend onto the middle ledge before opening room 7's gate.
 - The release WASM compiled successfully. Corrected asset packaging to include the renderer feature when locating Macroquad's matching JavaScript loader.
+
+- Browser diagnostics found Macroquad 0.4.14's bundled JavaScript lacks framebuffer functions used by its resolved Miniquad 0.4.8 dependency. The build now composes `gl.js` and the audio plugin directly from the exact locked Miniquad and quad-snd crates.
+- Corrected commit attribution to the authenticated GitHub account's numeric no-reply address for Vercel deployment checks. Existing milestone history is preserved.
+- The input-only replay now reaches the sword and return route; added a return jump over the slabs that crumbled on the outbound journey.

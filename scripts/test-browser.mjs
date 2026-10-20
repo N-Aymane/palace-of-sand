@@ -14,12 +14,12 @@ try {
     {name:'mobile-webkit',engine:webkit,options:{...devices['iPhone 13'],viewport:{width:844,height:390}}},
     {name:'portrait-webkit',engine:webkit,options:{...devices['iPhone 13']}}
   ]) {
-    const browser=await scenario.engine.launch({headless:true});
+    const browser=await scenario.engine.launch({headless:true,...(scenario.engine===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
     try {
       const context=await browser.newContext(scenario.options);
-      const page=await context.newPage();const errors=[];
-      page.on('pageerror',e=>errors.push(e.message));
-      page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+      const page=await context.newPage();const errors=[];const logs=[];
+      page.on('pageerror',e=>{errors.push(e.message);logs.push(e.stack);});
+      page.on('console',m=>{logs.push(`${m.type()}: ${m.text()}`);if(m.type()==='error')errors.push(m.text());});
       const response=await page.goto(url);assert.equal(response.status(),200);
       await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'),{timeout:30000});
       await page.waitForTimeout(400);
@@ -40,7 +40,8 @@ try {
       }
       await page.screenshot({path:`test-results/${scenario.name}-controls.png`,fullPage:true});
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no horizontal overflow');
-      assert.deepEqual(errors,[],'no browser errors');
+      writeFileSync(`test-results/${scenario.name}-console.json`,JSON.stringify(logs,null,2));
+      assert.deepEqual(errors,[],`no browser errors: ${logs.join('\n')}`);
       results.push({scenario:scenario.name,status:'passed'});
       console.log(`PASS ${scenario.name}`);
       await context.close();

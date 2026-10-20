@@ -137,8 +137,10 @@ fn opening_level_can_be_completed_using_only_controls() {
     climb(&mut g);
     assert_eq!(g.player.y, 60.0);
     until(&mut g, right(), |g| {
-        g.player.room == 12 && g.player.x > 111.0
+        g.player.room == 12 && g.player.x > 15.0
     });
+    jump(&mut g, right());
+    until(&mut g, right(), |g| g.player.x > 111.0 && g.player.grounded);
     jump(&mut g, right());
     until(&mut g, right(), |g| {
         g.player.room == 20 && g.player.x > 108.0 && g.player.grounded
