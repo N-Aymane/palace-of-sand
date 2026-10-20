@@ -99,3 +99,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Raised render targets to four times logical resolution, enabled smooth texture sampling, added fixed-tick position interpolation and state-pose blending, and added animated firelight/dust/contact shadows.
 - Added loading feedback that waits for the actual graphics assets before declaring the game ready.
 - Documented all generated runtime assets in `assets/art/README.md`. Gameplay collision geometry remains independent of artwork.
+
+- Startup verification: observe both WebGL log and info channels so the cinematic asset-ready signal dismisses the loading overlay.

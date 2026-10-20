@@ -33,14 +33,16 @@ document.querySelector('#fullscreen').addEventListener('click',async()=>{
 function fail(message){loading.classList.remove('hidden');document.querySelector('#loading-text').textContent=message;loading.querySelector('small').textContent='Reload to retry. WebAssembly and WebGL are required.';engineState.textContent='ENGINE COULD NOT START';}
 window.addEventListener('error',event=>fail(event.message||'The game could not start.'));
 window.addEventListener('unhandledrejection',event=>fail(String(event.reason?.message??event.reason)));
-const originalLog=console.log.bind(console);
-console.log=(...args)=>{
+for(const method of ['log','info']){
+const originalLog=console[method].bind(console);
+console[method]=(...args)=>{
   originalLog(...args);
   if(args.some(arg=>String(arg).includes('PALACE_GRAPHICS_READY'))){
     loading.classList.add('hidden');engineState.textContent='CINEMATIC EDITION / READY';
     requestAnimationFrame(()=>{gameCanvas.focus({preventScroll:true});if(muted)tap('KeyM');});
   }
 };
+}
 const readyPlugin={name:'palace_shell',version:1,register_plugin(){},on_init(){
   engineState.textContent='LOADING CINEMATIC ART';
   document.querySelector('#loading-text').textContent='Lighting the dungeon…';
