@@ -67,10 +67,15 @@ pub struct Player {
     pub grounded: bool,
     pub state_ticks: u16,
     pub invulnerable: u16,
+    pub landing_ticks: u8,
     fall_distance: f32,
     hang_row: usize,
     hang_room: u8,
     hang_x: f32,
+    climb_start_x: f32,
+    climb_start_y: f32,
+    coyote_ticks: u8,
+    jump_buffer: u8,
 }
 #[derive(Debug, Clone)]
 pub struct Guard {
@@ -140,10 +145,15 @@ impl Game {
                 grounded: false,
                 state_ticks: 0,
                 invulnerable: 0,
+                landing_ticks: 0,
                 fall_distance: 0.0,
                 hang_row: 0,
                 hang_room: start.room,
                 hang_x: 0.0,
+                climb_start_x: 0.0,
+                climb_start_y: 0.0,
+                coyote_ticks: 0,
+                jump_buffer: 0,
             },
             guards,
             tiles,
@@ -277,9 +287,20 @@ impl Game {
         self.elapsed_ticks = self.elapsed_ticks.saturating_add(1);
         self.player.state_ticks = self.player.state_ticks.saturating_add(1);
         self.player.invulnerable = self.player.invulnerable.saturating_sub(1);
+        self.player.landing_ticks = self.player.landing_ticks.saturating_sub(1);
         self.update_tiles();
         let up = input.up && !self.previous.up;
         let action = input.action && !self.previous.action;
+        self.player.jump_buffer = if up {
+            8
+        } else {
+            self.player.jump_buffer.saturating_sub(1)
+        };
+        self.player.coyote_ticks = if self.player.grounded {
+            6
+        } else {
+            self.player.coyote_ticks.saturating_sub(1)
+        };
         self.previous = input;
         if self.player.grounded && input.up {
             if let Some(index) = self.floor_index() {
@@ -300,6 +321,8 @@ impl Game {
             self.player.vx = 0.0;
             self.player.vy = 0.0;
             if input.up {
+                self.player.climb_start_x = self.player.x;
+                self.player.climb_start_y = self.player.y;
                 self.set_state(PlayerState::Climbing);
             } else if input.down || !input.action {
                 self.set_state(PlayerState::Falling);
@@ -309,7 +332,23 @@ impl Game {
             return;
         }
         if self.player.state == PlayerState::Climbing {
-            if self.player.state_ticks >= 18 {
+            let t = (f32::from(self.player.state_ticks) / 24.0).clamp(0.0, 1.0);
+            let eased = t * t * (3.0 - 2.0 * t);
+            let destination_x = self.player.hang_x
+                + if self.player.hang_room == self.player.room {
+                    0.0
+                } else if self.player.hang_x > self.player.climb_start_x {
+                    -ROOM_W
+                } else {
+                    ROOM_W
+                };
+            self.player.x =
+                self.player.climb_start_x + (destination_x - self.player.climb_start_x) * eased;
+            self.player.y = self.player.climb_start_y
+                + (floor_y(self.player.hang_row) - self.player.climb_start_y) * eased;
+            self.player.vx = 0.0;
+            self.player.vy = 0.0;
+            if self.player.state_ticks >= 24 {
                 self.player.y = floor_y(self.player.hang_row);
                 self.player.x = self.player.hang_x;
                 self.player.room = self.player.hang_room;
@@ -336,11 +375,16 @@ impl Game {
                 self.set_state(PlayerState::Parrying);
                 self.player.vx = 0.0;
             } else if direction != 0 {
-                if direction != self.player.facing && self.player.grounded {
-                    self.player.facing = direction;
-                    self.set_state(PlayerState::Turning);
-                    self.player.vx = 0.0;
-                } else if self.player.state != PlayerState::Turning || self.player.state_ticks >= 7
+                if direction != self.player.facing {
+                    if self.player.vx.abs() > 18.0 {
+                        self.player.vx = approach(self.player.vx, 0.0, 18.0);
+                        self.set_state(PlayerState::Stopping);
+                    } else {
+                        self.player.facing = direction;
+                        self.set_state(PlayerState::Turning);
+                        self.player.vx = 0.0;
+                    }
+                } else if self.player.state != PlayerState::Turning || self.player.state_ticks >= 4
                 {
                     let speed = if combat {
                         42.0
@@ -379,7 +423,15 @@ impl Game {
         if self.player.state == PlayerState::Hurt && self.player.state_ticks >= 15 {
             self.set_state(PlayerState::Idle);
         }
-        if up && !combat && self.player.grounded && !self.try_climb() {
+        let can_jump = self.player.grounded || self.player.coyote_ticks > 0;
+        let climbing =
+            self.player.jump_buffer > 0 && self.player.grounded && !combat && self.try_climb();
+        if climbing {
+            self.player.jump_buffer = 0;
+        }
+        if self.player.jump_buffer > 0 && !combat && can_jump && !climbing {
+            self.player.jump_buffer = 0;
+            self.player.coyote_ticks = 0;
             self.player.vy = -225.0;
             self.player.grounded = false;
             self.player.fall_distance = 0.0;
@@ -391,6 +443,13 @@ impl Game {
         }
         if self.player.state == PlayerState::Climbing {
             return;
+        }
+        if !self.player.grounded && input.left != input.right {
+            let direction = if input.right { 1.0 } else { -1.0 };
+            // A small steering force permits correction without erasing takeoff momentum.
+            if self.player.vx * direction < 0.0 {
+                self.player.vx = approach(self.player.vx, direction * 90.0, 1.6);
+            }
         }
         if input.down {
             self.player.vx = approach(self.player.vx, 0.0, 20.0);
@@ -423,7 +482,7 @@ impl Game {
             self.player.fall_distance = 0.0;
         }
         if !self.player.grounded {
-            self.apply_gravity(input.action);
+            self.apply_gravity(input.action, input.up);
         }
         self.cross_rooms();
         if self.phase != Phase::Playing {
@@ -465,6 +524,8 @@ impl Game {
                 {
                     let destination = self.horizontal_point(p.room, ahead);
                     self.player.hang_row = row;
+                    self.player.climb_start_x = self.player.x;
+                    self.player.climb_start_y = self.player.y;
                     if let Some((room, x)) = destination {
                         self.player.hang_room = room;
                         self.player.hang_x = x.clamp(8.0, ROOM_W - 8.0);
@@ -477,9 +538,14 @@ impl Game {
         }
         false
     }
-    fn apply_gravity(&mut self, grab: bool) {
+    fn apply_gravity(&mut self, grab: bool, hold_jump: bool) {
         let before = self.player.y;
-        self.player.vy = (self.player.vy + 600.0 * DT).min(420.0);
+        let gravity = if hold_jump && self.player.vy < 0.0 {
+            480.0
+        } else {
+            600.0
+        };
+        self.player.vy = (self.player.vy + gravity * DT).min(420.0);
         self.player.y += self.player.vy * DT;
         if self.player.vy > 0.0 {
             self.player.fall_distance += self.player.vy * DT;
@@ -517,6 +583,11 @@ impl Game {
                         self.player.y = y;
                         self.player.vy = 0.0;
                         self.player.grounded = true;
+                        self.player.landing_ticks = if self.player.fall_distance > 12.0 {
+                            8
+                        } else {
+                            0
+                        };
                         let distance = self.player.fall_distance;
                         self.player.fall_distance = 0.0;
                         self.set_state(PlayerState::Idle);
@@ -855,7 +926,7 @@ mod tests {
             ..Input::default()
         });
         assert_eq!(g.player.state, PlayerState::Climbing);
-        for _ in 0..19 {
+        for _ in 0..26 {
             g.step(Input::default());
         }
         assert_eq!(g.player.room, 6);
@@ -879,5 +950,63 @@ mod tests {
         });
         assert_eq!(g.player.health, 2);
         assert!(g.tile(5, 23).supports());
+    }
+    #[test]
+    fn jump_has_a_short_ledge_grace_period() {
+        let mut g = game();
+        place(&mut g, 8, 16);
+        g.player.x = 162.0;
+        g.player.facing = -1;
+        g.player.vx = -100.0;
+        g.step(Input {
+            left: true,
+            ..Input::default()
+        });
+        g.step(Input {
+            left: true,
+            ..Input::default()
+        });
+        assert!(!g.player.grounded);
+        g.step(Input {
+            up: true,
+            left: true,
+            ..Input::default()
+        });
+        assert!(g.player.vy < 0.0);
+        assert_eq!(g.player.state, PlayerState::Jumping);
+    }
+    #[test]
+    fn reversing_direction_preserves_deceleration() {
+        let mut g = game();
+        place(&mut g, 3, 13);
+        g.player.facing = 1;
+        g.player.vx = 100.0;
+        g.step(Input {
+            left: true,
+            ..Input::default()
+        });
+        assert!(g.player.vx > 0.0 && g.player.vx < 100.0);
+        assert_eq!(g.player.state, PlayerState::Stopping);
+    }
+    #[test]
+    fn climbing_moves_continuously_before_arriving() {
+        let mut g = game();
+        place(&mut g, 2, 10);
+        g.player.x = 9.0;
+        g.player.facing = -1;
+        g.step(Input {
+            up: true,
+            ..Input::default()
+        });
+        let start_y = g.player.y;
+        for _ in 0..10 {
+            g.step(Input::default());
+        }
+        assert!(g.player.y < start_y && g.player.y > 60.0);
+        for _ in 0..15 {
+            g.step(Input::default());
+        }
+        assert_eq!(g.player.room, 6);
+        assert_eq!(g.player.y, 60.0);
     }
 }

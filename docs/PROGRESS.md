@@ -84,3 +84,11 @@ The first verified-artifact Vercel preview reached READY at https://palace-of-sa
 - Verified the protected Vercel preview in desktop Chromium using existing origin-scoped authentication.
 - User requested smoother animation and more realistic graphics through Product Design. Reviewed the current game and generated three screenshot-grounded art directions; selection is pending before implementing the new assets.
 - See `docs/DESIGN_REFRESH.md` for the brief, concept order, and animation requirements. Production release will incorporate the selected visual direction.
+
+## 7 — Applying the requested upgrade
+
+The user explicitly asked to implement graphics and physics changes rather than continue selecting mockups. Proceeding with the cinematic realistic direction.
+
+- Added buffered jumping, a six-tick ledge grace period, momentum-preserving direction reversal, limited aerial correction, held-jump lift, landing feedback, and a continuous eased climb instead of a position snap.
+- Added physics regression tests and updated the complete input-only route for the longer climb duration.
+- Producing real raster environment and character-animation assets for the active renderer; these will replace the block figures and flat masonry rather than remain concept images.

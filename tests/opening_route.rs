@@ -44,7 +44,7 @@ fn climb(g: &mut Game) {
             up: true,
             ..Input::default()
         },
-        20,
+        26,
     );
     advance(g, Input::default(), 1);
 }
