@@ -330,7 +330,7 @@ impl Game {
         if combat && action && !attacking {
             self.set_state(PlayerState::Attacking);
             self.attack_hit = false;
-        } else if !attacking && self.player.state != PlayerState::Hurt {
+        } else if !attacking && self.player.state != PlayerState::Hurt && self.player.grounded {
             let direction = i8::from(input.right) - i8::from(input.left);
             if combat && input.up {
                 self.set_state(PlayerState::Parrying);
