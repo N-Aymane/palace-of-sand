@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, copyFileSync, cpSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname, join } from 'node:path';
 import { createHash } from 'node:crypto';
 
@@ -26,5 +26,6 @@ const gl=readFileSync(join(dirname(miniquad.manifest_path),'js/gl.js'),'utf8');
 const audio=readFileSync(join(dirname(sound.manifest_path),'js/audio.js'),'utf8');
 writeFileSync(join(dist,'mq.js'),gl+'\n;(function(){\n'+audio+'\n})();\n');
 for(const file of ['index.html','style.css','shell.js','favicon.svg']) copyFileSync(join(root,'web',file),join(dist,file));
-writeFileSync(join(dist,'build.json'),JSON.stringify({version:'0.1.0',macroquad:'0.4.14',wasmSha256:createHash('sha256').update(readFileSync(join(dist,'game.wasm'))).digest('hex')},null,2));
+cpSync(join(root,'assets/art'),join(dist,'art'),{recursive:true});
+writeFileSync(join(dist,'build.json'),JSON.stringify({version:'0.2.0',graphics:'cinematic-raster',macroquad:'0.4.14',wasmSha256:createHash('sha256').update(readFileSync(join(dist,'game.wasm'))).digest('hex')},null,2));
 console.log('Static WebAssembly bundle ready in dist/');

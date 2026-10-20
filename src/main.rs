@@ -1,8 +1,10 @@
 //! Pixel renderer and browser/native platform adapter.
 use macroquad::audio::{Sound, load_sound_from_bytes, play_sound_once};
 use macroquad::prelude::*;
-use palace_of_sand::level::{COLS, Level, Tile, floor_y};
-use palace_of_sand::{DT, Event, Game, Input, Phase, PlayerState};
+use palace_of_sand::level::Level;
+use palace_of_sand::{DT, Event, Game, Input, Phase};
+mod visual;
+use visual::{Animation, Art};
 
 const INK: Color = Color::from_rgba(14, 14, 23, 255);
 const STONE: Color = Color::from_rgba(62, 59, 77, 255);
@@ -108,15 +110,29 @@ async fn main() {
         },
     };
     let mut game = Game::new(level);
-    let desktop_target = render_target(320, 200);
-    let touch_target = render_target(320, 264);
-    desktop_target.texture.set_filter(FilterMode::Nearest);
-    touch_target.texture.set_filter(FilterMode::Nearest);
+    let art = match Art::load().await {
+        Ok(art) => art,
+        Err(error) => loop {
+            clear_background(INK);
+            draw_text(&error, 12.0, 35.0, 16.0, RED);
+            next_frame().await;
+        },
+    };
+    let mut animation = Animation::new();
+    let mut previous = game.player.clone();
+    let desktop_target = render_target(1280, 800);
+    let touch_target = render_target(1280, 1056);
+    desktop_target.texture.set_filter(FilterMode::Linear);
+    touch_target.texture.set_filter(FilterMode::Linear);
     let mut audio: Option<Audio> = None;
     let mut audio_attempted = false;
     let mut muted = false;
     let mut screen = Screen::Title;
     let mut accumulator = 0.0;
+    let mut previous_input = Input::default();
+    let mut pending_up = false;
+    let mut pending_action = false;
+    macroquad::logging::info!("PALACE_GRAPHICS_READY");
     loop {
         let touch_layout = screen_width() / screen_height() < 1.45;
         let virtual_h = if touch_layout { 264.0 } else { 200.0 };
@@ -214,11 +230,20 @@ async fn main() {
         } else {
             Input::default()
         };
+        pending_up |= input.up && !previous_input.up;
+        pending_action |= input.action && !previous_input.action;
+        previous_input = input;
         if screen == Screen::Playing && focused {
             accumulator += get_frame_time().min(0.1);
             while accumulator >= DT {
-                // Keep press edges until a simulation tick consumes them.
-                game.step(input);
+                previous = game.player.clone();
+                game.step(Input {
+                    up: input.up || pending_up,
+                    action: input.action || pending_action,
+                    ..input
+                });
+                pending_up = false;
+                pending_action = false;
                 if !muted {
                     if let Some(sounds) = &audio {
                         for &event in &game.events {
@@ -230,13 +255,30 @@ async fn main() {
             }
         } else {
             accumulator = 0.0;
+            pending_up = false;
+            pending_action = false;
+            previous = game.player.clone();
         }
+        animation.update(
+            &game.player,
+            if screen == Screen::Playing {
+                get_frame_time().min(0.1)
+            } else {
+                0.0
+            },
+        );
         set_camera(&Camera2D {
             render_target: Some(target.clone()),
             ..Camera2D::from_display_rect(Rect::new(0.0, 0.0, 320.0, virtual_h))
         });
         clear_background(INK);
-        draw_room(&game);
+        visual::draw_scene(
+            &art,
+            &game,
+            &previous,
+            (accumulator / DT).clamp(0.0, 1.0),
+            &animation,
+        );
         draw_hud(&game, muted, screen == Screen::Paused);
         if screen != Screen::Playing || game.phase != Phase::Playing {
             draw_overlay(&game, screen);
@@ -261,436 +303,6 @@ async fn main() {
     }
 }
 
-fn draw_room(game: &Game) {
-    let room = game.player.room;
-    // Masonry is generated from integer room/brick coordinates, never gameplay RNG.
-    draw_rectangle(0.0, 13.0, 320.0, 176.0, Color::from_rgba(24, 23, 35, 255));
-    for by in 0..12 {
-        for bx in -1..11 {
-            let hash = ((bx + 7) * 173 + by * 37 + i32::from(room) * 59) as u32;
-            let x = bx as f32 * 32.0 + if by % 2 == 0 { 0.0 } else { 16.0 };
-            let y = by as f32 * 16.0 + 13.0;
-            let v = (hash % 9) as u8;
-            let color = Color::from_rgba(29 + v, 28 + v, 40 + v, 255);
-            draw_rectangle(x, y, 31.0, 15.0, color);
-            draw_line(
-                x + 2.0,
-                y + 1.0,
-                x + 29.0,
-                y + 1.0,
-                1.0,
-                Color::from_rgba(46, 43, 57, 255),
-            );
-            if hash % 7 == 0 {
-                draw_line(
-                    x + 12.0,
-                    y + 3.0,
-                    x + 15.0,
-                    y + 9.0,
-                    1.0,
-                    Color::from_rgba(19, 18, 29, 255),
-                );
-            }
-        }
-    }
-    for c in [2, 7] {
-        arch(c as f32 * 32.0 + 5.0, 79.0);
-    }
-    for index in 0..30 {
-        let tile = game.tile(room, index);
-        let x = (index % COLS) as f32 * 32.0;
-        let y = floor_y(index / COLS);
-        let rt = game.runtime(room, index);
-        if tile == Tile::Wall {
-            wall(x, y - TILE_H_SAFE(), 32.0, 63.0);
-            continue;
-        }
-        if tile == Tile::Empty {
-            if rt.removed && rt.loose_ticks == 0 && game.level.tile(room, index) == Tile::Loose {
-                draw_line(x + 2.0, y + 3.0, x + 28.0, y + 4.0, 1.0, STONE);
-            }
-            continue;
-        }
-        let shake = if rt.loose_ticks > 0 {
-            if game.tick % 6 < 3 { -1.0 } else { 1.0 }
-        } else {
-            0.0
-        };
-        draw_rectangle(x + shake, y, 32.0, 8.0, STONE);
-        draw_rectangle(x + shake, y, 32.0, 2.0, EDGE);
-        draw_line(
-            x + 2.0,
-            y + 6.0,
-            x + 30.0,
-            y + 6.0,
-            1.0,
-            Color::from_rgba(39, 36, 50, 255),
-        );
-        draw_line(x, y, x, y + 7.0, 1.0, INK);
-        match tile {
-            Tile::Pillar => {
-                draw_rectangle(x + 22.0, y - 58.0, 6.0, 57.0, STONE);
-                draw_rectangle(x + 23.0, y - 57.0, 2.0, 56.0, EDGE);
-                draw_rectangle(x + 18.0, y - 59.0, 15.0, 5.0, EDGE);
-                draw_rectangle(x + 19.0, y - 5.0, 12.0, 5.0, EDGE);
-            }
-            Tile::Torch => torch(x + 14.0, y - 40.0, game.tick, index),
-            Tile::Loose => {
-                draw_line(x + 9.0, y + 1.0, x + 14.0, y + 5.0, 1.0, INK);
-                draw_line(x + 14.0, y + 5.0, x + 22.0, y + 2.0, 1.0, INK);
-            }
-            Tile::Spikes => {
-                for i in 0..5 {
-                    let sx = x + 4.0 + i as f32 * 6.0;
-                    draw_triangle(
-                        vec2(sx, y),
-                        vec2(sx + 2.0, y - 10.0),
-                        vec2(sx + 4.0, y),
-                        Color::from_rgba(174, 165, 161, 255),
-                    );
-                }
-            }
-            Tile::Gate => {
-                let top = y - 59.0;
-                let bottom = y - rt.gate_open * 58.0;
-                draw_rectangle(x + 3.0, top, 28.0, 3.0, EDGE);
-                for bar in 0..5 {
-                    let bx = x + 6.0 + bar as f32 * 5.0;
-                    draw_rectangle(
-                        bx,
-                        top,
-                        2.0,
-                        (bottom - top).max(0.0),
-                        Color::from_rgba(119, 111, 117, 255),
-                    );
-                }
-                draw_rectangle(x + 4.0, bottom, 27.0, 3.0, EDGE);
-            }
-            Tile::Opener | Tile::Closer => {
-                draw_rectangle(
-                    x + 5.0,
-                    y - 2.0,
-                    23.0,
-                    3.0,
-                    if rt.pressed {
-                        GOLD
-                    } else {
-                        Color::from_rgba(150, 123, 89, 255)
-                    },
-                );
-                draw_rectangle(x + 10.0, y - 1.0, 12.0, 1.0, INK);
-            }
-            Tile::Sword if !game.player.sword => {
-                draw_line(x + 9.0, y - 3.0, x + 25.0, y - 9.0, 2.0, LIGHT);
-                draw_line(x + 7.0, y - 6.0, x + 11.0, y, 2.0, GOLD);
-                if game.tick % 90 < 20 {
-                    draw_line(x + 24.0, y - 14.0, x + 24.0, y - 6.0, 1.0, WHITE);
-                    draw_line(x + 20.0, y - 10.0, x + 28.0, y - 10.0, 1.0, WHITE);
-                }
-            }
-            Tile::Potion if !rt.consumed => {
-                draw_rectangle(
-                    x + 13.0,
-                    y - 8.0,
-                    7.0,
-                    7.0,
-                    Color::from_rgba(149, 63, 69, 255),
-                );
-                draw_rectangle(x + 15.0, y - 12.0, 3.0, 5.0, GOLD);
-                draw_rectangle(x + 14.0, y - 7.0, 2.0, 3.0, LIGHT);
-            }
-            Tile::Exit => {
-                draw_rectangle(x - 2.0, y - 54.0, 62.0, 54.0, STONE);
-                draw_rectangle(x + 3.0, y - 50.0, 51.0, 50.0, INK);
-                let amount = game.runtime(room, index).gate_open;
-                for step in 0..5 {
-                    draw_rectangle(
-                        x + 5.0,
-                        y - step as f32 * 5.0,
-                        48.0 - step as f32 * 5.0,
-                        3.0,
-                        EDGE,
-                    );
-                }
-                draw_rectangle(
-                    x + 4.0,
-                    y - 49.0,
-                    49.0,
-                    49.0 * (1.0 - amount),
-                    Color::from_rgba(93, 74, 61, 255),
-                );
-                for line in 0..5 {
-                    let ly = y - 48.0 + line as f32 * 10.0;
-                    if ly < y - 49.0 * amount {
-                        draw_line(x + 5.0, ly, x + 51.0, ly, 1.0, GOLD);
-                    }
-                }
-            }
-            Tile::Skeleton => {
-                for i in 0..4 {
-                    draw_line(
-                        x + 8.0 + i as f32 * 4.0,
-                        y - 3.0,
-                        x + 10.0 + i as f32 * 4.0,
-                        y - 6.0,
-                        1.0,
-                        EDGE,
-                    );
-                }
-                draw_rectangle(x + 5.0, y - 6.0, 5.0, 5.0, LIGHT);
-            }
-            Tile::Debris => {
-                for i in 0..4 {
-                    draw_rectangle(
-                        x + 4.0 + i as f32 * 6.0,
-                        y - 2.0 - (i % 2) as f32,
-                        4.0,
-                        3.0,
-                        EDGE,
-                    );
-                }
-            }
-            _ => {}
-        }
-    }
-    for guard in &game.guards {
-        if guard.room == room {
-            person(
-                guard.x,
-                guard.y,
-                guard.facing,
-                if guard.health == 0 {
-                    PlayerState::Dead
-                } else if guard.windup > 0 {
-                    PlayerState::Attacking
-                } else {
-                    PlayerState::Combat
-                },
-                game.tick,
-                guard.windup,
-                true,
-                true,
-                guard.hurt > 0,
-            );
-            if guard.health > 0 {
-                for i in 0..guard.health {
-                    draw_rectangle(
-                        guard.x - 7.0 + f32::from(i) * 6.0,
-                        guard.y - 47.0,
-                        4.0,
-                        2.0,
-                        Color::from_rgba(188, 88, 72, 255),
-                    );
-                }
-            }
-        }
-    }
-    let p = &game.player;
-    if p.invulnerable == 0 || game.tick % 6 < 4 {
-        person(
-            p.x,
-            p.y,
-            p.facing,
-            p.state,
-            game.tick,
-            p.state_ticks,
-            p.sword,
-            false,
-            false,
-        );
-    }
-    // Darkness at the edges keeps the warm torch highlights legible.
-    for y in 0..4 {
-        draw_rectangle(
-            0.0,
-            185.0 + y as f32,
-            320.0,
-            1.0,
-            Color::new(0.03, 0.03, 0.05, 0.15 * y as f32),
-        );
-    }
-    draw_rectangle(0.0, 189.0, 320.0, 11.0, INK);
-    let hint = if !p.sword {
-        "FIND THE SWORD  /  EXPLORE TO THE LEFT"
-    } else {
-        "RETURN EAST  /  OPEN THE EXIT"
-    };
-    center(hint, 196.0, 7.0, Color::from_rgba(144, 130, 118, 255));
-}
-#[allow(non_snake_case)]
-fn TILE_H_SAFE() -> f32 {
-    63.0
-}
-fn wall(x: f32, y: f32, w: f32, h: f32) {
-    draw_rectangle(x, y, w, h, Color::from_rgba(51, 47, 62, 255));
-    for row in 0..4 {
-        let yy = y + row as f32 * 16.0;
-        draw_line(x, yy, x + w, yy, 1.0, Color::from_rgba(28, 26, 37, 255));
-        draw_line(
-            x + 1.0,
-            yy + 1.0,
-            x + w - 1.0,
-            yy + 1.0,
-            Color::from_rgba(83, 74, 88, 255).a,
-            EDGE,
-        );
-        let xx = x + if row % 2 == 0 { 12.0 } else { 25.0 };
-        draw_line(xx, yy, xx, yy + 15.0, 1.0, INK);
-    }
-}
-fn arch(x: f32, y: f32) {
-    draw_rectangle(x, y - 30.0, 22.0, 30.0, Color::from_rgba(19, 18, 29, 255));
-    for i in 0..6 {
-        draw_rectangle(
-            x + i as f32 * 2.0,
-            y - 30.0 - (i.min(5 - i)) as f32 * 3.0,
-            2.0,
-            4.0,
-            STONE,
-        );
-    }
-    draw_line(x - 2.0, y - 28.0, x - 2.0, y + 1.0, 2.0, STONE);
-    draw_line(x + 24.0, y - 28.0, x + 24.0, y + 1.0, 2.0, STONE);
-}
-fn torch(x: f32, y: f32, tick: u64, index: usize) {
-    for r in (1..4).rev() {
-        draw_circle(
-            x,
-            y - 4.0,
-            r as f32 * 7.0,
-            Color::new(0.8, 0.36, 0.08, 0.018),
-        );
-    }
-    draw_rectangle(x - 2.0, y, 4.0, 10.0, Color::from_rgba(104, 72, 51, 255));
-    draw_rectangle(x - 5.0, y + 7.0, 10.0, 2.0, STONE);
-    let flicker = ((tick / 7 + index as u64) % 3) as f32;
-    draw_rectangle(
-        x - 3.0,
-        y - 8.0 - flicker,
-        6.0,
-        9.0 + flicker,
-        Color::from_rgba(198, 89, 39, 255),
-    );
-    draw_rectangle(x - 2.0, y - 9.0 + flicker, 4.0, 8.0 - flicker, GOLD);
-    draw_rectangle(x - 1.0, y - 4.0, 2.0, 5.0, LIGHT);
-}
-#[allow(clippy::too_many_arguments)]
-fn person(
-    x: f32,
-    y: f32,
-    facing: i8,
-    state: PlayerState,
-    tick: u64,
-    state_ticks: u16,
-    sword: bool,
-    guard: bool,
-    hurt: bool,
-) {
-    let d = f32::from(facing);
-    let walking = matches!(
-        state,
-        PlayerState::Running | PlayerState::Stepping | PlayerState::Combat
-    );
-    let phase = (tick as f32 * 0.25).sin();
-    let stride = if walking { phase * 6.0 } else { 2.0 };
-    let crouch = matches!(state, PlayerState::Crouching | PlayerState::Hanging);
-    let dead = state == PlayerState::Dead;
-    let hip = if crouch { y - 10.0 } else { y - 18.0 };
-    let cloth = if hurt {
-        Color::from_rgba(232, 120, 91, 255)
-    } else if guard {
-        Color::from_rgba(175, 91, 66, 255)
-    } else {
-        Color::from_rgba(218, 208, 180, 255)
-    };
-    let shade = if guard {
-        Color::from_rgba(111, 53, 51, 255)
-    } else {
-        Color::from_rgba(147, 141, 141, 255)
-    };
-    let skin = Color::from_rgba(205, 151, 112, 255);
-    if dead {
-        draw_rectangle(x - 15.0, y - 6.0, 25.0, 5.0, cloth);
-        draw_rectangle(x + 10.0 * d, y - 7.0, 7.0, 6.0, skin);
-        return;
-    }
-    draw_line(x - 2.0, hip, x - stride, y - 2.0, 5.0, shade);
-    draw_line(x + 2.0, hip, x + stride, y - 2.0, 5.0, cloth);
-    draw_rectangle(
-        x - stride - 3.0,
-        y - 3.0,
-        7.0,
-        3.0,
-        Color::from_rgba(91, 70, 66, 255),
-    );
-    draw_rectangle(
-        x + stride - 2.0,
-        y - 3.0,
-        7.0,
-        3.0,
-        Color::from_rgba(91, 70, 66, 255),
-    );
-    let torso_y = hip - 13.0;
-    draw_rectangle(x - 5.0, torso_y, 10.0, 15.0, cloth);
-    draw_rectangle(
-        x - 5.0,
-        hip - 1.0,
-        10.0,
-        3.0,
-        if guard {
-            GOLD
-        } else {
-            Color::from_rgba(146, 67, 63, 255)
-        },
-    );
-    draw_rectangle(x - 3.0, torso_y - 8.0, 7.0, 8.0, skin);
-    draw_rectangle(
-        x - 4.0,
-        torso_y - 10.0,
-        8.0,
-        4.0,
-        Color::from_rgba(56, 37, 38, 255),
-    );
-    draw_rectangle(x + 3.0 * d, torso_y - 6.0, 2.0, 2.0, INK);
-    let combat = matches!(
-        state,
-        PlayerState::Combat | PlayerState::Attacking | PlayerState::Parrying
-    );
-    let hand_x = x + d * if combat { 12.0 } else { 5.0 };
-    let hand_y = if state == PlayerState::Hanging {
-        y - 38.0
-    } else if state == PlayerState::Parrying {
-        torso_y - 9.0
-    } else {
-        torso_y + 8.0
-    };
-    draw_line(x + d * 3.0, torso_y + 4.0, hand_x, hand_y, 3.0, skin);
-    if sword && (combat || guard) {
-        let thrust = if state == PlayerState::Attacking {
-            ((f32::from(state_ticks).min(14.0) / 14.0) * std::f32::consts::PI).sin() * 15.0
-        } else {
-            0.0
-        };
-        let end = vec2(
-            hand_x + d * (17.0 + thrust),
-            hand_y
-                - if state == PlayerState::Parrying {
-                    17.0
-                } else {
-                    4.0
-                },
-        );
-        draw_line(hand_x, hand_y, end.x, end.y, 2.0, LIGHT);
-        draw_line(
-            hand_x - d * 2.0,
-            hand_y - 4.0,
-            hand_x + d * 2.0,
-            hand_y + 4.0,
-            2.0,
-            GOLD,
-        );
-    }
-}
 fn draw_hud(game: &Game, muted: bool, paused: bool) {
     draw_rectangle(0.0, 0.0, 320.0, 13.0, INK);
     draw_line(

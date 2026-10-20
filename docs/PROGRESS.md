@@ -92,3 +92,10 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Added buffered jumping, a six-tick ledge grace period, momentum-preserving direction reversal, limited aerial correction, held-jump lift, landing feedback, and a continuous eased climb instead of a position snap.
 - Added physics regression tests and updated the complete input-only route for the longer climb duration.
 - Producing real raster environment and character-animation assets for the active renderer; these will replace the block figures and flat masonry rather than remain concept images.
+
+### Live renderer replacement
+
+- Replaced the procedural block-character and masonry drawing code with runtime raster textures, eight-frame running, action poses, and combat animation sheets.
+- Raised render targets to four times logical resolution, enabled smooth texture sampling, added fixed-tick position interpolation and state-pose blending, and added animated firelight/dust/contact shadows.
+- Added loading feedback that waits for the actual graphics assets before declaring the game ready.
+- Documented all generated runtime assets in `assets/art/README.md`. Gameplay collision geometry remains independent of artwork.
