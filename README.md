@@ -1,6 +1,6 @@
 # Palace of Sand
 
-A Rust/WebAssembly recreation of the opening dungeon from DOS Prince of Persia, with original procedural pixel artwork and synthesized sound. Desktop keyboard and mobile touch controls. Static hosting on Vercel.
+A Rust/WebAssembly recreation of the opening dungeon from DOS Prince of Persia, with original cinematic raster artwork and animated character sheets and synthesized sound. Desktop keyboard and mobile touch controls. Static hosting on Vercel.
 
 ## Development
 
@@ -14,7 +14,7 @@ node scripts/build.mjs
 node scripts/serve.mjs
 ```
 
-Open http://localhost:4173. Build output is `dist/`. The build script uses the workspace-local toolchain when present, otherwise Rust from PATH.
+Open http://127.0.0.1:4173. The current cinematic edition adds interpolated animation, momentum, buffered jumps, ledge grace, and continuous climbing. Build output is `dist/`. The build script uses the workspace-local toolchain when present, otherwise Rust from PATH.
 
 ## Controls
 

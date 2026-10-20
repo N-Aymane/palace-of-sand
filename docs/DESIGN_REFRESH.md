@@ -16,8 +16,8 @@ Three independent concepts were generated with the built-in ImageGen tool, each 
 
 Each prompt requested a single 1536×960 game viewport, preserved platform/pit positions, ivory clothing and red sash, realistic proportions, minimal health/timer HUD, and no surrounding website redesign. These are art-direction concepts, not implemented graphics or animation assets.
 
-## Next implementation pass
+## Implemented direction
 
-After the user selects a direction, create actual game-ready environment textures and consistent character animation assets. Keep collision data independent of the new artwork. Improve stride mechanics, weight transfer, anticipation, landings, ledge climbing, cloth motion, and state transitions; interpolate rendering between fixed simulation ticks so smoother presentation does not change deterministic gameplay.
+The user subsequently instructed immediate implementation of graphics and physics. The cinematic physical realism direction is now implemented with runtime PNG textures and character sheets, a four-times-resolution render target, pose transitions, and fixed-step position interpolation. The concepts above are reference images; the playable game uses newly generated modular assets documented in `assets/art/README.md`.
 
-Product Design's ideation workflow requires visual selection before build work. The current game remains playable locally on port 4173 while selection is pending.
+Physics now includes momentum on reversals, jump buffering, ledge grace, held-jump lift, air correction, and continuous climbing. Geometry and deterministic simulation remain separate from presentation. See `design-qa.md` for rendered verification and remaining polish.

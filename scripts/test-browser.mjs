@@ -25,21 +25,23 @@ try {
       if(new URL(url).hostname.endsWith('.vercel.app')&&process.env.VERCEL_OIDC_TOKEN){
         await context.route(`${targetOrigin}/**`,route=>route.continue({headers:{...route.request().headers(),'x-vercel-trusted-oidc-idp-token':process.env.VERCEL_OIDC_TOKEN}}));
       }
-      const page=await context.newPage();const errors=[];const logs=[];
+      const page=await context.newPage();page.setDefaultTimeout(60000);const errors=[];const logs=[];
+      // Capture the live canvas without waiting for its animation loop to become stable.
+      const captureCanvas=async()=>page.screenshot({clip:await page.locator('canvas').boundingBox(),timeout:60000});
       page.on('pageerror',e=>{errors.push(e.message);logs.push(e.stack);});
       page.on('console',m=>{logs.push(`${m.type()}: ${m.text()}`);if(m.type()==='error')errors.push(m.text());});
       const response=await page.goto(url);assert.equal(response.status(),200);
       await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'),{timeout:30000});
       await page.waitForTimeout(400);
       await page.screenshot({path:`test-results/${scenario.name}-title.png`,fullPage:true});
-      const before=await page.locator('canvas').screenshot();
+      const before=await captureCanvas();
       if(scenario.options.hasTouch) {
         const box=await page.locator('canvas').boundingBox();
         // Start button in the Rust-rendered title screen, in the 320x264 virtual viewport.
         await page.touchscreen.tap(box.x+box.width/2,box.y+box.width*(139/320));
       }else{await page.locator('#play').click();}
       await page.waitForTimeout(1100);
-      const after=await page.locator('canvas').screenshot();assert.notDeepEqual(before,after,'start must change the game frame');
+      const after=await captureCanvas();assert.notDeepEqual(before,after,'start must change the game frame');
       await page.screenshot({path:`test-results/${scenario.name}-playing.png`,fullPage:true});
       if(!scenario.options.hasTouch){await page.keyboard.down('ArrowRight');await page.waitForTimeout(1200);await page.keyboard.up('ArrowRight');await page.keyboard.press('Escape');}
       else {

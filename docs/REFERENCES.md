@@ -23,4 +23,4 @@ Observed by offline format decoding: start room 1; loose slab at room 1 tile 26;
 
 `scripts/import-level.mjs` documents the independent decoder and can reproduce the transcription from the reference record. The record itself, original art, sounds, and SDLPoP source code are excluded from distribution. `assets/opening.json` transcribes the original game's arrangement and is reference-derived data, not newly authored level design; original ownership is retained.
 
-Design choices, not DOS measurements: simulation at 60 Hz; run speed 100 pixels/second; jump impulse 225 pixels/second; gravity 600 pixels/second squared; simplified guard windups and gate timers. Animation uses newly drawn procedural poses. Exact DOS animation tables, timing quirks, and exploits are not reproduced.
+Design choices, not DOS measurements: simulation at 60 Hz; run speed 100 pixels/second; jump impulse 225 pixels/second; gravity 600 pixels/second squared; simplified guard windups and gate timers. Animation uses original raster character sheets, render interpolation, and short state transitions. Exact DOS animation tables, timing quirks, and exploits are not reproduced.
