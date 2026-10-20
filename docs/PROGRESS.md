@@ -107,3 +107,15 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Final typography build passed Rust/replay/lint/WASM checks and desktop Chromium. Mobile CI capture timed out waiting for an animated canvas to stabilize; changed the test to capture its bounding rectangle directly and allow slower software-rendered CI frames. No gameplay assertion was removed.
 
 - Final local mobile verification caught a Macroquad font-atlas texture invalidation when introducing large glyph sizes mid-frame. Prewarm all interface glyph sizes before queuing rendering; keep the browser console-error assertion as the regression gate.
+
+### Verified cinematic release
+
+- CI run `39449760577` passed all Rust tests, the complete deterministic escape replay, formatting, strict library/WASM Clippy, release compilation, and desktop Chromium, mobile Chromium, landscape WebKit, and portrait WebKit browser scenarios.
+- The verified bundle is now served locally on port 4173. WASM SHA-256: `a8cacc0ce43b4bfd061bd4d31525750437c6bf6b3352ef9cee2469cfafcc2825`.
+- Visual QA compared the selected direction and final desktop/mobile renders; blocking issues were corrected. See `design-qa.md`.
+- Updated Vercel preview: https://palace-of-sand-ch2be9xt4-aymanes-projects-2dbeb6ea.vercel.app.
+
+- Verified protected preview with desktop and touch input, then promoted the same bundle to https://palace-of-sand.vercel.app. Unauthenticated production `build.json` returned HTTP 200 with the verified WASM digest.
+- Protected-preview test authentication is now explicit (`TEST_PROTECTED=1`), so development OIDC headers are never attached to public production tests.
+
+- Production desktop Chromium and mobile touch verification passed. Local preview remains http://127.0.0.1:4173/; all milestone code and documentation are pushed to the private GitHub repository.

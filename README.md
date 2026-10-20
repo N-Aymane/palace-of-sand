@@ -2,6 +2,8 @@
 
 A Rust/WebAssembly recreation of the opening dungeon from DOS Prince of Persia, with original cinematic raster artwork and animated character sheets and synthesized sound. Desktop keyboard and mobile touch controls. Static hosting on Vercel.
 
+Play: https://palace-of-sand.vercel.app
+
 ## Development
 
 Install stable Rust, then `rustup target add wasm32-unknown-unknown`.

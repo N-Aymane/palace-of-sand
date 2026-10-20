@@ -4,7 +4,8 @@ import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 const url=process.env.TEST_URL??'http://127.0.0.1:4173';
 const targetOrigin=new URL(url).origin;
-if(new URL(url).hostname.endsWith('.vercel.app')&&!process.env.VERCEL_OIDC_TOKEN){
+const protectedDeployment=process.env.TEST_PROTECTED==='1';
+if(protectedDeployment&&new URL(url).hostname.endsWith('.vercel.app')&&!process.env.VERCEL_OIDC_TOKEN){
   try{process.loadEnvFile('.env.local');}catch{}
 }
 let server;
@@ -22,7 +23,7 @@ try {
     const browser=await scenario.engine.launch({headless:true,...(scenario.engine===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
     try {
       const context=await browser.newContext(scenario.options);
-      if(new URL(url).hostname.endsWith('.vercel.app')&&process.env.VERCEL_OIDC_TOKEN){
+      if(protectedDeployment&&new URL(url).hostname.endsWith('.vercel.app')&&process.env.VERCEL_OIDC_TOKEN){
         await context.route(`${targetOrigin}/**`,route=>route.continue({headers:{...route.request().headers(),'x-vercel-trusted-oidc-idp-token':process.env.VERCEL_OIDC_TOKEN}}));
       }
       const page=await context.newPage();page.setDefaultTimeout(60000);const errors=[];const logs=[];
