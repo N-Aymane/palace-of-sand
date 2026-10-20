@@ -3,6 +3,10 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 const url=process.env.TEST_URL??'http://127.0.0.1:4173';
+const targetOrigin=new URL(url).origin;
+if(new URL(url).hostname.endsWith('.vercel.app')&&!process.env.VERCEL_OIDC_TOKEN){
+  try{process.loadEnvFile('.env.local');}catch{}
+}
 let server;
 if(!process.env.TEST_URL){server=spawn(process.execPath,['scripts/serve.mjs'],{stdio:'inherit'});await new Promise(r=>setTimeout(r,1000));}
 mkdirSync('test-results',{recursive:true});
@@ -14,9 +18,13 @@ try {
     {name:'mobile-webkit',engine:webkit,options:{...devices['iPhone 13'],viewport:{width:844,height:390}}},
     {name:'portrait-webkit',engine:webkit,options:{...devices['iPhone 13']}}
   ]) {
+    if(process.env.TEST_SCENARIOS&&!process.env.TEST_SCENARIOS.split(',').includes(scenario.name))continue;
     const browser=await scenario.engine.launch({headless:true,...(scenario.engine===chromium&&process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH}:{})});
     try {
       const context=await browser.newContext(scenario.options);
+      if(new URL(url).hostname.endsWith('.vercel.app')&&process.env.VERCEL_OIDC_TOKEN){
+        await context.route(`${targetOrigin}/**`,route=>route.continue({headers:{...route.request().headers(),'x-vercel-trusted-oidc-idp-token':process.env.VERCEL_OIDC_TOKEN}}));
+      }
       const page=await context.newPage();const errors=[];const logs=[];
       page.on('pageerror',e=>{errors.push(e.message);logs.push(e.stack);});
       page.on('console',m=>{logs.push(`${m.type()}: ${m.text()}`);if(m.type()==='error')errors.push(m.text());});

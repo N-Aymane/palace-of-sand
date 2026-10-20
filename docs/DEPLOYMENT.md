@@ -25,6 +25,8 @@ npx vercel@64.7.0 deploy --prebuilt --yes --environment preview --scope team_JAj
 
 Verify the preview before staging production with the same static output:
 
+For a protected preview, `TEST_URL=<preview-url> npm run test:browser` uses the linked project's short-lived development OIDC token from the environment or `.env.local`. The token header is restricted to that exact origin. Use `TEST_SCENARIOS=desktop-chromium,mobile-chromium` when only Chromium is installed; Linux CI also covers WebKit.
+
 ```sh
 npx vercel@64.7.0 deploy --prebuilt --prod --skip-domain --yes --scope team_JAj2uNFkSeGwPoCyuPlOgGY8
 npx vercel@64.7.0 promote <verified-staged-production-url> --scope team_JAj2uNFkSeGwPoCyuPlOgGY8

@@ -75,3 +75,5 @@ GitHub run `39441734228` passed formatting, all 13 simulation/geometry tests (in
 Visual inspection of its mobile screenshots found inverted touch-control rendering despite passing runtime checks. Moved touch controls into the same pixel render target as the game to make their orientation and hit areas consistent.
 
 The first verified-artifact Vercel preview reached READY at https://palace-of-sand-c57tqsipz-aymanes-projects-2dbeb6ea.vercel.app. Production promotion waits for the mobile visual correction.
+
+- Added origin-scoped OIDC support to the browser verification script for testing protected Vercel previews with existing local authentication; no protection settings are weakened.
