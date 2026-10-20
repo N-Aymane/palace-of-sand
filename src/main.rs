@@ -118,6 +118,12 @@ async fn main() {
             next_frame().await;
         },
     };
+    // Populate every UI glyph before queuing any drawing. Growing the font atlas
+    // during a frame can invalidate textures already referenced by that frame.
+    let glyphs: String = (' '..='~').collect();
+    for size in [7, 24, 28, 32, 36, 40, 64, 72, 100] {
+        let _ = measure_text(&glyphs, None, size, 1.0);
+    }
     let mut animation = Animation::new();
     let mut previous = game.player.clone();
     let desktop_target = render_target(1280, 800);

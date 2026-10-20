@@ -105,3 +105,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Visual QA found low-resolution HUD glyphs against the new artwork. Labels now rasterize at four times the simulation density to match the 1280-pixel render target. Local Edge desktop and touch checks passed; the live local tab shows cinematic artwork.
 
 - Final typography build passed Rust/replay/lint/WASM checks and desktop Chromium. Mobile CI capture timed out waiting for an animated canvas to stabilize; changed the test to capture its bounding rectangle directly and allow slower software-rendered CI frames. No gameplay assertion was removed.
+
+- Final local mobile verification caught a Macroquad font-atlas texture invalidation when introducing large glyph sizes mid-frame. Prewarm all interface glyph sizes before queuing rendering; keep the browser console-error assertion as the regression gate.
