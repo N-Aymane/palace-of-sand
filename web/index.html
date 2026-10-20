@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101016">
+  <meta name="description" content="A cinematic dungeon escape, built in Rust and WebAssembly. Original pixel art. Classic, deliberate platforming. Play with a keyboard or touch.">
+  <title>Palace of Sand — The Dungeon</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#game">Skip to game</a>
+  <main>
+    <header class="masthead">
+      <a class="wordmark" href="/" aria-label="Palace of Sand home"><svg viewBox="0 0 36 44" aria-hidden="true"><path d="M3 41V21L18 3l15 18v20M10 41V23l8-10 8 10v18M18 28v13M0 41h36"/></svg><span>PALACE<br>OF SAND</span></a>
+      <div class="edition"><span>AN UNOFFICIAL TRIBUTE</span><span class="edition-line">RUST · WEBASSEMBLY · VOL. 01</span></div>
+    </header>
+    <section class="chapter" aria-labelledby="chapter-title">
+      <div><p class="overline"><span class="chapter-number">I</span> THE GREAT ESCAPE</p><h1 id="chapter-title">Beneath the palace.</h1></div>
+      <p class="chapter-note">Find the sword.<br>Live to see the light.</p>
+    </section>
+    <section id="game" class="game-section" aria-label="Palace of Sand game">
+      <div class="frame-top"><span><i class="status-dot"></i> <span id="engine-state">PREPARING THE DUNGEON</span></span><span>CHAPTER 01 <span class="divider">/</span> DOS REIMAGINED</span></div>
+      <div class="canvas-wrap">
+        <canvas id="glcanvas" tabindex="0" aria-label="Dungeon game. Arrow keys move and jump. Shift grabs, steps carefully, picks up items and attacks. Escape pauses. Press Enter to start.">This game requires a browser with WebAssembly and WebGL.</canvas>
+        <div id="loading" role="status" aria-live="polite"><span class="loading-emblem">Ⅰ</span><p id="loading-text">Opening the dungeon…</p><small>Loading the Rust game engine</small></div>
+      </div>
+      <div class="game-toolbar">
+        <button id="play" type="button"><span aria-hidden="true">▷</span> Play / resume</button>
+        <div class="toolbar-right"><button id="restart" type="button" title="Restart the level (R)">Restart <kbd>R</kbd></button><button id="sound" type="button" aria-pressed="false">Sound on</button><button id="fullscreen" type="button" aria-label="Enter fullscreen">⛶ <span>Fullscreen</span></button></div>
+      </div>
+    </section>
+    <p class="rotate-note">For more room to escape, turn your phone sideways.</p>
+    <section class="field-notes" aria-label="Controls and game notes">
+      <div class="control"><span class="note-label">01 / MOVEMENT</span><p><kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd><span>Move, jump & climb</span></p></div>
+      <div class="control"><span class="note-label">02 / INTENTION</span><p><kbd>SHIFT</kbd><span>Step, grab, pick up & strike</span></p></div>
+      <div class="control"><span class="note-label">03 / SURVIVAL</span><p><kbd>↑</kbd><span>Parry in combat</span><kbd>ESC</kbd><span>Pause</span></p></div>
+    </section>
+    <footer><p>A love letter to the cinematic platformer.<br><span>Original artwork & sound. Inspired by Prince of Persia for DOS.</span></p><a href="https://github.com/N-Aymane/palace-of-sand" target="_blank" rel="noopener">THE MAKING OF <span aria-hidden="true">↗</span></a></footer>
+  </main>
+  <script src="/mq.js"></script>
+  <script src="/shell.js"></script>
+</body>
+</html>

@@ -20,3 +20,13 @@ Validation: empty starting workspace inspected; toolchain installation in progre
 - Added a Linux verification workflow because Windows application-control policy blocks locally compiled build-script executables (OS error 4551). No policy changes were made.
 
 Validation: dependency resolution completed; native compilation reached the linker successfully but execution was blocked by host policy. GitHub Actions will supply the native test results.
+
+## 3 — Browser game and original presentation
+
+- Added original procedural dungeon masonry, torches, gates, props, character poses, and pixel-scaled rendering.
+- Added Rust-generated WAV sound effects, title/help/pause/death/completion screens, health and countdown.
+- Added keyboard and multi-touch controls, safe-area-aware mobile layout, fullscreen, audio preferences, and focus-loss pausing.
+- Built the browser shell with loading/error feedback, accessible shortcut buttons, controls documentation, and responsive presentation.
+- Added a build script that copies the exact JavaScript loader shipped with the pinned Macroquad crate.
+
+Validation: browser and renderer compilation checks are now running in Linux CI; no original graphics or sound were imported.

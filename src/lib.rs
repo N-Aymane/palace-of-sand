@@ -84,6 +84,7 @@ pub struct Guard {
 #[derive(Debug, Clone, Copy, Default)]
 pub struct TileRuntime {
     pub removed: bool,
+    pub consumed: bool,
     pub loose_ticks: u16,
     pub gate_ticks: u16,
     pub gate_open: f32,
@@ -265,6 +266,21 @@ impl Game {
         let up = input.up && !self.previous.up;
         let action = input.action && !self.previous.action;
         self.previous = input;
+        if self.player.grounded && input.up {
+            if let Some(index) = self.floor_index() {
+                let room = self.player.room;
+                let exit = match self.tile(room, index) {
+                    Tile::Exit => Some(index),
+                    Tile::ExitRight => Some(index.saturating_sub(1)),
+                    _ => None,
+                };
+                if exit.is_some_and(|tile| self.runtime(room, tile).gate_open > 0.9) {
+                    self.phase = Phase::Complete;
+                    self.events.push(Event::Complete);
+                    return;
+                }
+            }
+        }
         if self.player.state == PlayerState::Hanging {
             self.player.vx = 0.0;
             self.player.vy = 0.0;
@@ -585,14 +601,14 @@ impl Game {
                     self.hurt(3);
                 }
             }
-            Tile::Sword if action => {
+            Tile::Sword if action && !self.player.sword => {
                 self.tiles[usize::from(room) - 1][index].removed = false;
                 self.player.sword = true;
                 self.events.push(Event::Sword);
             }
-            Tile::Potion if action && !self.runtime(room, index).pressed => {
+            Tile::Potion if action && !self.runtime(room, index).consumed => {
                 self.player.health = (self.player.health + 1).min(3);
-                self.tiles[usize::from(room) - 1][index].pressed = true;
+                self.tiles[usize::from(room) - 1][index].consumed = true;
                 self.events.push(Event::Drink);
             }
             Tile::Exit | Tile::ExitRight if input.up => {
