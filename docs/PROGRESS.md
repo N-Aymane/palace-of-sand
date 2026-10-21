@@ -133,3 +133,13 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Obstruction test edits the level's validated ASCII row representation, matching the renderer-independent geometry format.
 
 - Run `39618665118` passed 24 Rust/level tests, lint and release compilation. Desktop browser combat passed; CI mobile landed two strikes before its capture/input deadline. The identical build passed desktop and actual emulated-touch combat locally in Edge. Prevented canvas long-press context menus and allowed slower software-rendered browser checks more time without weakening the three-hit assertion; failures now save their screenshot and console log.
+
+### Combat release verification
+
+- CI job for run `39621192204` passed 23 focused tests plus the full campaign replay, formatting, strict library/WASM Clippy, release compilation, and all four browser scenarios.
+- Both desktop Chromium keyboard and mobile Chromium touch defended against a real guard strike, then held attack through three confirmed hits. WebKit landscape and portrait checks passed.
+- Local Edge also passed the keyboard and touch combat flow. Protected preview HTTP checks returned the v0.3.0 bundle using existing Vercel authentication; no project environment download was needed.
+
+- Promoted v0.3.0 to https://palace-of-sand.vercel.app. The public build metadata confirms the verified WASM digest; local port 4173 is updated to the same bundle. See `docs/COMBAT.md` for keyboard, touch and Sword practice instructions.
+
+- Production keyboard combat passed. A mobile startup request timed out once; a fresh public mobile check then passed defence and all three touch strikes. CI also passed all four browser scenarios.

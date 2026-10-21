@@ -21,3 +21,5 @@ These are deliberately accessible game rules, not measurements of the DOS combat
 ## Verification
 
 Native regression cases cover repeat attacks, one hit per swing, recovery buffering, a timed parry and counter, a held block, retreat facing, unarmed defence failure, hurt recovery, entering the strike's active window and dead guards. The full campaign input replay must still complete. Browser tests exercise the Sword practice entry, defence against a live guard and three repeated hits through both keyboard and actual Chromium touch events. WebKit retains its startup/layout/input checks.
+
+Verification completed: CI run `39621192204` passed all 24 Rust/level tests and four browser scenarios.

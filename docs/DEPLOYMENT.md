@@ -41,3 +41,13 @@ Credentials and local OIDC development files are excluded from Git and deploymen
 Public game: https://palace-of-sand.vercel.app
 
 Released from passing CI run `39449760577`, commit `a5d3292`. Preview was checked with desktop and touch controls before production promotion. Production serves the identical verified WASM digest recorded in `build.json`. The project-scoped alias may require Vercel authentication; share the public game URL above.
+
+## Combat and parry release — 2026-10-21
+
+Version `0.3.0`, source commit `cba37fd`, verified by run `39621192204` (24 Rust/level tests, strict lint, release WASM and four browser scenarios). Public URL remains https://palace-of-sand.vercel.app.
+
+Production deployment: `dpl_FGhMSFtQ48wJwEdQg4fMRgc1unGt`. Verified WASM SHA-256: `cbdb254f69c5e4daef68f07f921ca88facc10d13d636924a1b03b361617602f1`. The public metadata endpoint returns HTTP 200 with this exact build digest. Both the local port-4173 bundle and production use this artifact.
+
+See `COMBAT.md` for controls, timing, practice mode and coverage. Preview HTTP verification used the authenticated Vercel CLI. Development-environment retrieval was rejected by automatic approval review, so no environment payload was downloaded; browser verification also ran locally and on public production.
+
+Production combat checks passed for keyboard and touch. One transient mobile startup timeout was cleared by a fresh run; no gameplay assertion was removed.
