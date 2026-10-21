@@ -119,3 +119,11 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Protected-preview test authentication is now explicit (`TEST_PROTECTED=1`), so development OIDC headers are never attached to public production tests.
 
 - Production desktop Chromium and mobile touch verification passed. Local preview remains http://127.0.0.1:4173/; all milestone code and documentation are pushed to the private GitHub repository.
+
+## 8 — Working sword combat and timed parry (2026-10-21)
+
+- Replaced single-tick attack detection with an active strike window and one hit per swing. Holding Shift/Z repeats strikes, and late recovery taps buffer the next swing.
+- Fighters keep facing their opponent while retreating; strikes stop movement and cannot cancel hurt recovery. Dead or struck guards cannot finish cancelled attacks.
+- Added X and a dedicated mobile PARRY button. Hold to block; raise defence within twelve simulation ticks of impact for a perfect parry, guard stagger and a counterattack opening. Up still defends in a nearby sword encounter.
+- Added visible HIT/BLOCK/PARRY feedback and combat hints. Added Sword practice (T) for an immediate repeatable encounter; campaign sword pickup is preserved.
+- Added combat regression coverage and browser input checks that defend against a live guard, then hold keyboard/touch attack through three successful hits.

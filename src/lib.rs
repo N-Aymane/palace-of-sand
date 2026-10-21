@@ -13,6 +13,7 @@ pub struct Input {
     pub up: bool,
     pub down: bool,
     pub action: bool,
+    pub parry: bool,
 }
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PlayerState {
@@ -49,6 +50,8 @@ pub enum Event {
     Sword,
     Drink,
     Clash,
+    Parry,
+    Hit,
     Hurt,
     Death,
     Complete,
@@ -107,8 +110,11 @@ pub struct Game {
     pub tick: u64,
     pub elapsed_ticks: u32,
     pub events: Vec<Event>,
+    pub combat_feedback_ticks: u8,
+    pub last_combat_event: Event,
     previous: Input,
     attack_hit: bool,
+    attack_buffer: u8,
 }
 impl Game {
     pub fn new(level: Level) -> Self {
@@ -161,12 +167,28 @@ impl Game {
             tick: 0,
             elapsed_ticks: 0,
             events: Vec::with_capacity(8),
+            combat_feedback_ticks: 0,
+            last_combat_event: Event::Clash,
             previous: Input::default(),
             attack_hit: false,
+            attack_buffer: 0,
         }
     }
     pub fn restart(&mut self) {
         *self = Self::new(self.level.clone());
+    }
+    /// A repeatable sword-training encounter; the campaign still starts unarmed.
+    pub fn start_duel(&mut self) {
+        self.restart();
+        if let Some(guard) = self.guards.first() {
+            self.player.room = guard.room;
+            self.player.x = guard.x - 44.0;
+            self.player.y = guard.y;
+            self.player.facing = 1;
+            self.player.sword = true;
+            self.player.grounded = true;
+            self.player.state = PlayerState::Combat;
+        }
     }
     pub fn runtime(&self, room: u8, tile: usize) -> TileRuntime {
         self.tiles[usize::from(room) - 1][tile]
@@ -288,9 +310,15 @@ impl Game {
         self.player.state_ticks = self.player.state_ticks.saturating_add(1);
         self.player.invulnerable = self.player.invulnerable.saturating_sub(1);
         self.player.landing_ticks = self.player.landing_ticks.saturating_sub(1);
+        self.combat_feedback_ticks = self.combat_feedback_ticks.saturating_sub(1);
         self.update_tiles();
         let up = input.up && !self.previous.up;
         let action = input.action && !self.previous.action;
+        self.attack_buffer = if action {
+            10
+        } else {
+            self.attack_buffer.saturating_sub(1)
+        };
         self.player.jump_buffer = if up {
             8
         } else {
@@ -358,60 +386,83 @@ impl Game {
             }
             return;
         }
-        let threat = self.guards.iter().any(|g| {
-            g.health > 0
-                && g.room == self.player.room
-                && (g.y - self.player.y).abs() < 15.0
-                && (g.x - self.player.x).abs() < 95.0
-        });
-        let combat = threat && self.player.sword && self.player.grounded;
-        let attacking = self.player.state == PlayerState::Attacking && self.player.state_ticks < 22;
-        if combat && action && !attacking {
-            self.set_state(PlayerState::Attacking);
-            self.attack_hit = false;
-        } else if !attacking && self.player.state != PlayerState::Hurt && self.player.grounded {
-            let direction = i8::from(input.right) - i8::from(input.left);
-            if combat && input.up {
+        let opponent = self
+            .guards
+            .iter()
+            .filter(|g| {
+                g.health > 0
+                    && g.room == self.player.room
+                    && (g.y - self.player.y).abs() < 15.0
+                    && (g.x - self.player.x).abs() < 110.0
+            })
+            .min_by(|a, b| {
+                (a.x - self.player.x)
+                    .abs()
+                    .total_cmp(&(b.x - self.player.x).abs())
+            })
+            .map(|g| g.x);
+        let combat = opponent.is_some() && self.player.sword && self.player.grounded;
+        let attacking = self.player.state == PlayerState::Attacking && self.player.state_ticks < 24;
+        let defending =
+            self.player.sword && self.player.grounded && (input.parry || (combat && input.up));
+        // Sword input is held/repeatable. A completed attack explicitly restarts its clock.
+        // Damage and recovery cannot be cancelled by spamming attack or defence.
+        if self.player.state != PlayerState::Hurt && self.player.grounded {
+            if !attacking && defending {
+                if let Some(x) = opponent {
+                    self.player.facing = if x < self.player.x { -1 } else { 1 };
+                }
                 self.set_state(PlayerState::Parrying);
                 self.player.vx = 0.0;
-            } else if direction != 0 {
-                if direction != self.player.facing {
-                    if self.player.vx.abs() > 18.0 {
-                        self.player.vx = approach(self.player.vx, 0.0, 18.0);
-                        self.set_state(PlayerState::Stopping);
-                    } else {
-                        self.player.facing = direction;
-                        self.set_state(PlayerState::Turning);
-                        self.player.vx = 0.0;
+            } else if !attacking
+                && self.player.sword
+                && (input.action || self.attack_buffer > 0)
+                && !input.up
+                && !input.down
+                && (combat || (!input.left && !input.right))
+            {
+                if let Some(x) = opponent {
+                    self.player.facing = if x < self.player.x { -1 } else { 1 };
+                }
+                self.set_state(PlayerState::Attacking);
+                self.player.state_ticks = 0;
+                self.player.vx = 0.0;
+                self.attack_hit = false;
+                self.attack_buffer = 0;
+            } else if !attacking {
+                let direction = i8::from(input.right) - i8::from(input.left);
+                if combat {
+                    if let Some(x) = opponent {
+                        self.player.facing = if x < self.player.x { -1 } else { 1 };
                     }
-                } else if self.player.state != PlayerState::Turning || self.player.state_ticks >= 4
-                {
-                    let speed = if combat {
-                        42.0
-                    } else if input.action {
-                        32.0
-                    } else {
-                        100.0
-                    };
-                    let target = f32::from(direction) * speed;
-                    self.player.vx = approach(self.player.vx, target, 9.0);
-                    if self.player.grounded {
-                        self.set_state(if combat {
-                            PlayerState::Combat
-                        } else if input.action {
+                    self.player.vx = approach(self.player.vx, f32::from(direction) * 42.0, 9.0);
+                    self.set_state(PlayerState::Combat);
+                } else if direction != 0 {
+                    if direction != self.player.facing {
+                        if self.player.vx.abs() > 18.0 {
+                            self.player.vx = approach(self.player.vx, 0.0, 18.0);
+                            self.set_state(PlayerState::Stopping);
+                        } else {
+                            self.player.facing = direction;
+                            self.set_state(PlayerState::Turning);
+                            self.player.vx = 0.0;
+                        }
+                    } else if self.player.state != PlayerState::Turning
+                        || self.player.state_ticks >= 4
+                    {
+                        let speed = if input.action { 32.0 } else { 100.0 };
+                        self.player.vx =
+                            approach(self.player.vx, f32::from(direction) * speed, 9.0);
+                        self.set_state(if input.action {
                             PlayerState::Stepping
                         } else {
                             PlayerState::Running
                         });
                     }
-                }
-            } else {
-                self.player.vx = approach(self.player.vx, 0.0, 12.0);
-                if self.player.grounded {
+                } else {
+                    self.player.vx = approach(self.player.vx, 0.0, 12.0);
                     self.set_state(if input.down {
                         PlayerState::Crouching
-                    } else if combat {
-                        PlayerState::Combat
                     } else if self.player.vx.abs() > 1.0 {
                         PlayerState::Stopping
                     } else {
@@ -423,13 +474,22 @@ impl Game {
         if self.player.state == PlayerState::Hurt && self.player.state_ticks >= 15 {
             self.set_state(PlayerState::Idle);
         }
+        if combat || defending {
+            self.player.jump_buffer = 0;
+        }
         let can_jump = self.player.grounded || self.player.coyote_ticks > 0;
         let climbing =
             self.player.jump_buffer > 0 && self.player.grounded && !combat && self.try_climb();
         if climbing {
             self.player.jump_buffer = 0;
         }
-        if self.player.jump_buffer > 0 && !combat && can_jump && !climbing {
+        if self.player.jump_buffer > 0
+            && !combat
+            && !defending
+            && !attacking
+            && can_jump
+            && !climbing
+        {
             self.player.jump_buffer = 0;
             self.player.coyote_ticks = 0;
             self.player.vy = -225.0;
@@ -727,18 +787,27 @@ impl Game {
     fn update_guards(&mut self) {
         let p = &self.player;
         let mut damage = false;
-        for guard in &mut self.guards {
+        let mut feedback = None;
+        // Respect walls and shut gates between fighters, even at sword range.
+        let clear: Vec<bool> = self
+            .guards
+            .iter()
+            .map(|g| !self.blocked(p.room, (p.x + g.x) * 0.5, p.y))
+            .collect();
+        for (guard, clear) in self.guards.iter_mut().zip(clear) {
             guard.hurt = guard.hurt.saturating_sub(1);
-            if guard.health == 0 || guard.room != p.room || (guard.y - p.y).abs() > 16.0 {
+            if guard.health == 0 || guard.room != p.room || (guard.y - p.y).abs() > 16.0 || !clear {
                 continue;
             }
             let distance = (guard.x - p.x).abs();
             guard.facing = if p.x < guard.x { -1 } else { 1 };
             guard.cooldown = guard.cooldown.saturating_sub(1);
-            if p.state == PlayerState::Attacking
-                && p.state_ticks == 8
+            if p.sword
+                && p.grounded
+                && p.state == PlayerState::Attacking
+                && (6..=12).contains(&p.state_ticks)
                 && !self.attack_hit
-                && distance < 51.0
+                && distance < 56.0
                 && f32::from(p.facing) * (guard.x - p.x) > 0.0
             {
                 guard.health = guard.health.saturating_sub(1);
@@ -746,25 +815,44 @@ impl Game {
                 guard.cooldown = 65;
                 guard.windup = 0;
                 self.attack_hit = true;
-                self.events.push(Event::Clash);
+                feedback = Some(Event::Hit);
+                // A struck/dead guard cannot finish a cancelled windup this tick.
+                continue;
+            }
+            if guard.hurt > 0 {
+                continue;
             }
             if guard.windup > 0 {
                 guard.windup -= 1;
-                if guard.windup == 0 && distance < 49.0 {
-                    if p.state == PlayerState::Parrying
-                        && f32::from(p.facing) * (guard.x - p.x) > 0.0
-                    {
-                        self.events.push(Event::Clash);
-                    } else {
-                        damage = true;
-                    }
+                if guard.windup == 0 {
                     guard.cooldown = 70;
+                    if distance < 52.0 && p.grounded {
+                        if p.sword
+                            && p.state == PlayerState::Parrying
+                            && f32::from(p.facing) * (guard.x - p.x) > 0.0
+                        {
+                            if p.state_ticks <= 12 {
+                                guard.hurt = 36;
+                                guard.cooldown = 90;
+                                feedback = Some(Event::Parry);
+                            } else {
+                                feedback = Some(Event::Clash);
+                            }
+                        } else {
+                            damage = true;
+                        }
+                    }
                 }
-            } else if guard.cooldown == 0 && distance < 48.0 {
+            } else if guard.cooldown == 0 && distance < 52.0 {
                 guard.windup = 26;
-            } else if distance > 37.0 && distance < 155.0 && guard.hurt == 0 {
+            } else if distance > 38.0 && distance < 155.0 {
                 guard.x += f32::from(guard.facing) * 24.0 * DT;
             }
+        }
+        if let Some(event) = feedback {
+            self.events.push(event);
+            self.last_combat_event = event;
+            self.combat_feedback_ticks = 24;
         }
         if damage {
             self.hurt(1);
@@ -899,6 +987,142 @@ mod tests {
             }
         }
         assert_eq!(g.guards[0].health, 0);
+    }
+    fn duel() -> Game {
+        let mut g = game();
+        g.start_duel();
+        g
+    }
+    #[test]
+    fn held_attack_repeats_and_each_swing_hits_once() {
+        let mut g = duel();
+        let input = Input {
+            action: true,
+            ..Input::default()
+        };
+        for _ in 0..20 {
+            g.step(input);
+        }
+        assert_eq!(g.guards[0].health, 2, "one hit per swing");
+        for _ in 0..55 {
+            g.step(input);
+        }
+        assert_eq!(g.guards[0].health, 0, "holding attack must repeat");
+        let health = g.player.health;
+        for _ in 0..180 {
+            g.step(Input::default());
+        }
+        assert_eq!(g.player.health, health, "dead guards cannot attack");
+    }
+    #[test]
+    fn tap_during_recovery_queues_next_swing() {
+        let mut g = duel();
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        for _ in 0..18 {
+            g.step(Input::default());
+        }
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        for _ in 0..14 {
+            g.step(Input::default());
+        }
+        assert_eq!(g.guards[0].health, 1);
+    }
+    #[test]
+    fn timed_parry_staggers_guard_and_allows_counterattack() {
+        let mut g = duel();
+        g.guards[0].windup = 2;
+        for _ in 0..2 {
+            g.step(Input {
+                parry: true,
+                ..Input::default()
+            });
+        }
+        assert_eq!(g.player.health, 3);
+        assert_eq!(g.last_combat_event, Event::Parry);
+        assert!(g.guards[0].hurt > 0);
+        for _ in 0..10 {
+            g.step(Input {
+                action: true,
+                ..Input::default()
+            });
+        }
+        assert_eq!(g.guards[0].health, 2, "parry creates a counter window");
+    }
+    #[test]
+    fn held_block_protects_but_is_not_a_perfect_parry() {
+        let mut g = duel();
+        g.guards[0].windup = 30;
+        for _ in 0..30 {
+            g.step(Input {
+                parry: true,
+                ..Input::default()
+            });
+        }
+        assert_eq!(g.player.health, 3);
+        assert_eq!(g.last_combat_event, Event::Clash);
+        assert_eq!(g.guards[0].hurt, 0);
+        assert!(g.player.grounded);
+    }
+    #[test]
+    fn up_blocks_in_combat_and_retreat_keeps_enemy_in_front() {
+        let mut g = duel();
+        let start = g.player.x;
+        for _ in 0..6 {
+            g.step(Input {
+                left: true,
+                ..Input::default()
+            });
+        }
+        assert!(g.player.x < start);
+        assert_eq!(g.player.facing, 1);
+        g.guards[0].windup = 1;
+        g.step(Input {
+            up: true,
+            ..Input::default()
+        });
+        assert_eq!(g.player.health, 3);
+        assert_eq!(g.player.state, PlayerState::Parrying);
+        assert!(g.player.grounded);
+    }
+    #[test]
+    fn unarmed_block_fails_and_hurt_cannot_be_cancelled_by_attack() {
+        let mut g = duel();
+        g.player.sword = false;
+        g.guards[0].windup = 1;
+        g.step(Input {
+            parry: true,
+            ..Input::default()
+        });
+        assert_eq!(g.player.health, 2);
+        g.player.sword = true;
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        assert_eq!(g.player.state, PlayerState::Hurt);
+        assert_eq!(g.guards[0].health, 3);
+    }
+    #[test]
+    fn swing_hits_when_guard_enters_active_window_and_not_out_of_range() {
+        let mut g = duel();
+        g.guards[0].x = g.player.x + 70.0;
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        for _ in 0..8 {
+            g.step(Input::default());
+        }
+        assert_eq!(g.guards[0].health, 3);
+        g.guards[0].x = g.player.x + 50.0;
+        g.step(Input::default());
+        assert_eq!(g.guards[0].health, 2, "active window lasts past tick eight");
     }
     #[test]
     fn jump_returns_to_floor() {

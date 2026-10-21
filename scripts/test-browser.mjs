@@ -50,6 +50,34 @@ try {
         await page.touchscreen.tap(box.x+box.width*97/320,box.y+box.width*240/320);
       }
       await page.screenshot({path:`test-results/${scenario.name}-controls.png`,fullPage:true});
+      if(scenario.engine===chromium) {
+        const combatStart=logs.length;
+        const waitCombat=async(predicate,message)=>{
+          for(let i=0;i<150;i++) {
+            if(predicate(logs.slice(combatStart)))return;
+            await page.waitForTimeout(100);
+          }
+          assert.fail(message+'\n'+logs.slice(combatStart).join('\n'));
+        };
+        await page.locator('#duel').click();
+        await page.waitForTimeout(300);
+        let touch;
+        const touchButton=async(x,pressed)=>{
+          const box=await page.locator('canvas').boundingBox();
+          touch??=await context.newCDPSession(page);
+          await touch.send('Input.dispatchTouchEvent',{type:pressed?'touchStart':'touchEnd',
+            touchPoints:pressed?[{x:box.x+box.width*x/320,y:box.y+box.width*234/320}]:[]});
+        };
+        if(scenario.options.hasTouch)await touchButton(217,true);
+        else await page.keyboard.down('x');
+        await waitCombat(lines=>lines.some(s=>s.includes('COMBAT_BLOCK')||s.includes('COMBAT_PARRY')),'defence must stop a real guard strike');
+        await page.screenshot({path:`test-results/${scenario.name}-parry.png`,fullPage:true});
+        if(scenario.options.hasTouch){await touchButton(217,false);await touchButton(282,true);}
+        else{await page.keyboard.up('x');await page.keyboard.down('z');}
+        await waitCombat(lines=>lines.filter(s=>s.includes('COMBAT_HIT')).length>=3,'holding attack must hit and defeat the guard');
+        if(scenario.options.hasTouch)await touchButton(282,false);else await page.keyboard.up('z');
+        await page.screenshot({path:`test-results/${scenario.name}-combat.png`,fullPage:true});
+      }
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no horizontal overflow');
       writeFileSync(`test-results/${scenario.name}-console.json`,JSON.stringify(logs,null,2));
       assert.deepEqual(errors,[],`no browser errors: ${logs.join('\n')}`);

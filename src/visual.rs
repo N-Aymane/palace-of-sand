@@ -2,7 +2,7 @@
 //! Simulation coordinates remain 320×189; artwork never changes collisions.
 use macroquad::prelude::*;
 use palace_of_sand::level::{COLS, Tile, floor_y};
-use palace_of_sand::{Game, Player, PlayerState};
+use palace_of_sand::{Event, Game, Player, PlayerState};
 
 pub struct Art {
     backdrop: Texture2D,
@@ -324,6 +324,29 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
         );
     }
     actor(art, pose, position, tint, animation.blend, time);
+    if game.combat_feedback_ticks > 0 {
+        let (label, color) = match game.last_combat_event {
+            Event::Parry => ("PARRY!", Color::new(0.6, 0.88, 1.0, 1.0)),
+            Event::Hit => ("HIT", Color::new(1.0, 0.65, 0.35, 1.0)),
+            _ => ("BLOCK", Color::new(1.0, 0.89, 0.6, 1.0)),
+        };
+        crate::draw_crisp_text(
+            label,
+            (position.x - 12.0).clamp(2.0, 278.0),
+            position.y - 47.0,
+            7.0,
+            color,
+        );
+        let point = vec2(position.x + f32::from(p.facing) * 22.0, position.y - 25.0);
+        let spread = f32::from(25 - game.combat_feedback_ticks) * 0.5;
+        for i in 0..6 {
+            let angle = i as f32 * 1.047;
+            let direction = vec2(angle.cos(), angle.sin());
+            let start = point + direction * spread;
+            let end = start + direction * 3.0;
+            draw_line(start.x, start.y, end.x, end.y, 0.6, color);
+        }
+    }
     // Dust motes and ember highlights are presentation effects, never collision objects.
     for i in 0..22 {
         let seed = i as f32 * 47.73 + f32::from(room) * 17.0;
@@ -344,7 +367,14 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
         );
     }
     draw_rectangle(0.0, 189.0, 320.0, 11.0, Color::from_rgba(12, 11, 15, 255));
-    let hint = if !p.sword {
+    let nearby_guard = game.guards.iter().any(|g| {
+        g.health > 0 && g.room == p.room && (g.y - p.y).abs() < 16.0 && (g.x - p.x).abs() < 110.0
+    });
+    let hint = if nearby_guard && p.sword {
+        "Z / SHIFT: Strike   X / UP: Block - time it to parry"
+    } else if nearby_guard {
+        "You need a sword. Retreat and find it, or try Sword practice."
+    } else if !p.sword {
         "Find the sword. Explore the western dungeon."
     } else {
         "Return east. Open the stairway and escape."

@@ -64,7 +64,7 @@ impl Audio {
         play_sound_once(match e {
             Event::Step | Event::Land | Event::Crumble => &self.step,
             Event::Jump | Event::Grab => &self.jump,
-            Event::Sword | Event::Gate | Event::Clash => &self.metal,
+            Event::Sword | Event::Gate | Event::Clash | Event::Parry | Event::Hit => &self.metal,
             Event::Hurt | Event::Death => &self.hurt,
             Event::Complete | Event::Drink => &self.win,
         });
@@ -138,6 +138,7 @@ async fn main() {
     let mut previous_input = Input::default();
     let mut pending_up = false;
     let mut pending_action = false;
+    let mut pending_parry = false;
     macroquad::logging::info!("PALACE_GRAPHICS_READY");
     loop {
         let touch_layout = screen_width() / screen_height() < 1.45;
@@ -180,6 +181,15 @@ async fn main() {
         }
         if is_key_pressed(KeyCode::M) || hit(Rect::new(269.0, 0.0, 22.0, 13.0)) {
             muted = !muted;
+        }
+        if is_key_pressed(KeyCode::T) {
+            game.start_duel();
+            screen = Screen::Playing;
+            accumulator = 0.0;
+            if !audio_attempted {
+                audio = Audio::new().await;
+                audio_attempted = true;
+            }
         }
         if is_key_pressed(KeyCode::R) || hit(Rect::new(240.0, 0.0, 26.0, 13.0)) {
             game.restart();
@@ -229,13 +239,16 @@ async fn main() {
                 right: is_key_down(KeyCode::Right) || held(Rect::new(80.0, 226.0, 34.0, 32.0)),
                 up: is_key_down(KeyCode::Up) || held(Rect::new(44.0, 205.0, 34.0, 26.0)),
                 down: is_key_down(KeyCode::Down) || held(Rect::new(44.0, 234.0, 34.0, 28.0)),
-                action: is_key_down(KeyCode::LeftShift)
+                parry: is_key_down(KeyCode::X) || held(Rect::new(188.0, 211.0, 58.0, 47.0)),
+                action: is_key_down(KeyCode::Z)
+                    || is_key_down(KeyCode::LeftShift)
                     || is_key_down(KeyCode::RightShift)
                     || held(Rect::new(253.0, 211.0, 58.0, 47.0)),
             }
         } else {
             Input::default()
         };
+        pending_parry |= input.parry && !previous_input.parry;
         pending_up |= input.up && !previous_input.up;
         pending_action |= input.action && !previous_input.action;
         previous_input = input;
@@ -246,10 +259,20 @@ async fn main() {
                 game.step(Input {
                     up: input.up || pending_up,
                     action: input.action || pending_action,
+                    parry: input.parry || pending_parry,
                     ..input
                 });
                 pending_up = false;
                 pending_action = false;
+                pending_parry = false;
+                for event in &game.events {
+                    match event {
+                        Event::Parry => macroquad::logging::info!("COMBAT_PARRY"),
+                        Event::Hit => macroquad::logging::info!("COMBAT_HIT"),
+                        Event::Clash => macroquad::logging::info!("COMBAT_BLOCK"),
+                        _ => {}
+                    }
+                }
                 if !muted {
                     if let Some(sounds) = &audio {
                         for &event in &game.events {
@@ -401,7 +424,7 @@ fn draw_overlay(game: &Game, screen: Screen) {
     if screen == Screen::Help {
         center("ARROWS  Move / Jump / Crouch", 99.0, 9.0, LIGHT);
         center(
-            "SHIFT  Step carefully / Grab / Pick up / Strike",
+            "SHIFT / Z  Strike   X / UP  Block or parry",
             110.0,
             8.0,
             EDGE,
@@ -441,7 +464,8 @@ fn draw_touch_controls(input: Input) {
         (Rect::new(80.0, 226.0, 34.0, 32.0), ">", input.right),
         (Rect::new(44.0, 205.0, 34.0, 26.0), "^", input.up),
         (Rect::new(44.0, 234.0, 34.0, 28.0), "v", input.down),
-        (Rect::new(253.0, 211.0, 58.0, 47.0), "ACTION", input.action),
+        (Rect::new(253.0, 211.0, 58.0, 47.0), "ATTACK", input.action),
+        (Rect::new(188.0, 211.0, 58.0, 47.0), "PARRY", input.parry),
     ];
     for (r, label, pressed) in buttons {
         draw_rectangle(
@@ -466,8 +490,8 @@ fn draw_touch_controls(input: Input) {
             if pressed { INK } else { GOLD },
         );
     }
-    draw_crisp_text("HOLD ACTION", 137.0, 226.0, 7.0, EDGE);
-    draw_crisp_text("TO STEP SAFELY", 132.0, 237.0, 7.0, EDGE);
+    draw_crisp_text("TIME", 139.0, 226.0, 7.0, EDGE);
+    draw_crisp_text("YOUR BLOCK", 121.0, 237.0, 7.0, EDGE);
 }
 
 // Rasterize labels at render-target density, then scale in simulation coordinates.

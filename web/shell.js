@@ -4,7 +4,7 @@ const gameCanvas=document.querySelector('#glcanvas');
 const loading=document.querySelector('#loading');
 const engineState=document.querySelector('#engine-state');
 const keys=new Set();
-const keyCodes={Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
+const keyCodes={KeyT:84,Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
 function sendKey(code,type='keydown') {
   const event=new KeyboardEvent(type,{code,key:code.startsWith('Key')?code.slice(3):code,bubbles:true,cancelable:true,keyCode:keyCodes[code],which:keyCodes[code]});
   gameCanvas.dispatchEvent(event);
@@ -19,6 +19,7 @@ window.addEventListener('keyup',event=>keys.delete(event.code));
 window.addEventListener('blur',pauseAndRelease);
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseAndRelease();});
 document.querySelector('#play').addEventListener('click',()=>tap('Enter'));
+document.querySelector('#duel').addEventListener('click',()=>tap('KeyT'));
 document.querySelector('#restart').addEventListener('click',()=>tap('KeyR'));
 let muted=false;
 try{muted=localStorage.getItem('palace-muted')==='true';}catch{}
