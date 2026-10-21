@@ -129,3 +129,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Added combat regression coverage and browser input checks that defend against a live guard, then hold keyboard/touch attack through three successful hits.
 
 - First CI pass confirmed all simulation tests and full escape replay. Fixed a strict WASM logging-macro lint before browser verification; added whole-blade obstruction checking and a wall regression case.
+
+- Obstruction test edits the level's validated ASCII row representation, matching the renderer-independent geometry format.

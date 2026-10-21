@@ -1119,7 +1119,8 @@ mod tests {
         let mut g = duel();
         let column = ((g.player.x + g.guards[0].x) * 0.5 / TILE_W) as usize;
         let row = ((g.player.y + 3.0) / TILE_H).round() as usize - 1;
-        g.level.rooms[usize::from(g.player.room) - 1].tiles[row * COLS + column] = Tile::Wall;
+        g.level.rooms[usize::from(g.player.room) - 1].rows[row]
+            .replace_range(column..column + 1, "#");
         g.guards[0].windup = 1;
         for _ in 0..14 {
             g.step(Input {
