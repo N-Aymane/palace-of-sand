@@ -788,17 +788,23 @@ impl Game {
         let p = &self.player;
         let mut damage = false;
         let mut feedback = None;
-        // Respect walls and shut gates between fighters, even at sword range.
-        let clear: Vec<bool> = self
-            .guards
-            .iter()
-            .map(|g| !self.blocked(p.room, (p.x + g.x) * 0.5, p.y))
-            .collect();
-        for (guard, clear) in self.guards.iter_mut().zip(clear) {
-            guard.hurt = guard.hurt.saturating_sub(1);
-            if guard.health == 0 || guard.room != p.room || (guard.y - p.y).abs() > 16.0 || !clear {
+        // Check the complete blade segment before taking a mutable guard borrow.
+        // This avoids allocations and prevents hits across walls or narrow gates.
+        for index in 0..self.guards.len() {
+            let guard = &self.guards[index];
+            if guard.health == 0 || guard.room != p.room || (guard.y - p.y).abs() > 16.0 {
                 continue;
             }
+            let steps = ((guard.x - p.x).abs() / 4.0).ceil().max(1.0) as u16;
+            let clear = (0..=steps).all(|i| {
+                let x = p.x + (guard.x - p.x) * f32::from(i) / f32::from(steps);
+                !self.blocked(p.room, x, p.y)
+            });
+            if !clear {
+                continue;
+            }
+            let guard = &mut self.guards[index];
+            guard.hurt = guard.hurt.saturating_sub(1);
             let distance = (guard.x - p.x).abs();
             guard.facing = if p.x < guard.x { -1 } else { 1 };
             guard.cooldown = guard.cooldown.saturating_sub(1);
@@ -1107,6 +1113,22 @@ mod tests {
         });
         assert_eq!(g.player.state, PlayerState::Hurt);
         assert_eq!(g.guards[0].health, 3);
+    }
+    #[test]
+    fn walls_stop_both_swords() {
+        let mut g = duel();
+        let column = ((g.player.x + g.guards[0].x) * 0.5 / TILE_W) as usize;
+        let row = ((g.player.y + 3.0) / TILE_H).round() as usize - 1;
+        g.level.rooms[usize::from(g.player.room) - 1].tiles[row * COLS + column] = Tile::Wall;
+        g.guards[0].windup = 1;
+        for _ in 0..14 {
+            g.step(Input {
+                action: true,
+                ..Input::default()
+            });
+        }
+        assert_eq!(g.guards[0].health, 3);
+        assert_eq!(g.player.health, 3);
     }
     #[test]
     fn swing_hits_when_guard_enters_active_window_and_not_out_of_range() {

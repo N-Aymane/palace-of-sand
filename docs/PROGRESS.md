@@ -127,3 +127,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Added X and a dedicated mobile PARRY button. Hold to block; raise defence within twelve simulation ticks of impact for a perfect parry, guard stagger and a counterattack opening. Up still defends in a nearby sword encounter.
 - Added visible HIT/BLOCK/PARRY feedback and combat hints. Added Sword practice (T) for an immediate repeatable encounter; campaign sword pickup is preserved.
 - Added combat regression coverage and browser input checks that defend against a live guard, then hold keyboard/touch attack through three successful hits.
+
+- First CI pass confirmed all simulation tests and full escape replay. Fixed a strict WASM logging-macro lint before browser verification; added whole-blade obstruction checking and a wall regression case.

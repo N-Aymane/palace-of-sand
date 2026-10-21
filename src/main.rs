@@ -267,9 +267,15 @@ async fn main() {
                 pending_parry = false;
                 for event in &game.events {
                     match event {
-                        Event::Parry => macroquad::logging::info!("COMBAT_PARRY"),
-                        Event::Hit => macroquad::logging::info!("COMBAT_HIT"),
-                        Event::Clash => macroquad::logging::info!("COMBAT_BLOCK"),
+                        Event::Parry => {
+                            macroquad::logging::info!("COMBAT_PARRY");
+                        }
+                        Event::Hit => {
+                            macroquad::logging::info!("COMBAT_HIT");
+                        }
+                        Event::Clash => {
+                            macroquad::logging::info!("COMBAT_BLOCK");
+                        }
                         _ => {}
                     }
                 }
