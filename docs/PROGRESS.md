@@ -131,3 +131,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - First CI pass confirmed all simulation tests and full escape replay. Fixed a strict WASM logging-macro lint before browser verification; added whole-blade obstruction checking and a wall regression case.
 
 - Obstruction test edits the level's validated ASCII row representation, matching the renderer-independent geometry format.
+
+- Run `39618665118` passed 24 Rust/level tests, lint and release compilation. Desktop browser combat passed; CI mobile landed two strikes before its capture/input deadline. The identical build passed desktop and actual emulated-touch combat locally in Edge. Prevented canvas long-press context menus and allowed slower software-rendered browser checks more time without weakening the three-hit assertion; failures now save their screenshot and console log.

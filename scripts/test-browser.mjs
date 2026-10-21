@@ -53,10 +53,12 @@ try {
       if(scenario.engine===chromium) {
         const combatStart=logs.length;
         const waitCombat=async(predicate,message)=>{
-          for(let i=0;i<150;i++) {
+          for(let i=0;i<600;i++) {
             if(predicate(logs.slice(combatStart)))return;
             await page.waitForTimeout(100);
           }
+          writeFileSync(`test-results/${scenario.name}-console.json`,JSON.stringify(logs,null,2));
+          await page.screenshot({path:`test-results/${scenario.name}-combat-failure.png`,fullPage:true});
           assert.fail(message+'\n'+logs.slice(combatStart).join('\n'));
         };
         await page.locator('#duel').click();

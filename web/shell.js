@@ -4,6 +4,8 @@ const gameCanvas=document.querySelector('#glcanvas');
 const loading=document.querySelector('#loading');
 const engineState=document.querySelector('#engine-state');
 const keys=new Set();
+// Long presses on game controls must remain held input, not open a browser menu.
+gameCanvas.addEventListener('contextmenu',event=>event.preventDefault());
 const keyCodes={KeyT:84,Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
 function sendKey(code,type='keydown') {
   const event=new KeyboardEvent(type,{code,key:code.startsWith('Key')?code.slice(3):code,bubbles:true,cancelable:true,keyCode:keyCodes[code],which:keyCodes[code]});
