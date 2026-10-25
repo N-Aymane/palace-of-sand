@@ -36,7 +36,12 @@ try {
         const expectedDenial=m.location().url.includes('/api/checkpoint')&&m.text().includes('401');
         if(m.type()==='error'&&!expectedDenial)errors.push(m.text());});
       const response=await page.goto(url);assert.equal(response.status(),200);
-      await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'),{timeout:30000});
+      try { await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'),{timeout:30000}); }
+      catch(error){
+        writeFileSync(`test-results/${scenario.name}-startup-console.json`,JSON.stringify(logs,null,2));
+        await page.screenshot({path:`test-results/${scenario.name}-startup-failure.png`,fullPage:true}).catch(()=>{});
+        throw error;
+      }
       await page.waitForTimeout(400);
       if(scenario.options.hasTouch){
         const layout=await page.evaluate(()=>{
