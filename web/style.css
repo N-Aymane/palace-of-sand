@@ -60,3 +60,4 @@
 #checkpoint-feedback{min-height:24px;color:#9cd4e4}#checkpoint-dialog small,#checkpoint-slot{color:#b2a99c}#shrine-status{padding:10px 12px;background:#252735;border-left:2px solid #8dc9e2}
 @media(pointer:coarse){#checkpoint-open{font-size:8px;padding-inline:4px}#checkpoint-dialog{padding:20px}.save-actions{flex-wrap:wrap}#checkpoint-dialog h2{font-size:27px}}
 .save-unlock select{min-width:0;flex:1;background:#0f1016;color:#f1e2c9;border:1px solid #655a4b;padding:10px;border-radius:4px;font:inherit}#checkpoint-dialog hr{border:0;border-top:1px solid #4a4237;margin:24px 0}
+@media(pointer:coarse){.save-unlock input,.save-unlock select{font-size:16px}}

@@ -110,6 +110,14 @@ try {
         if(scenario.options.hasTouch)await touchButton(282,false);else await page.keyboard.up('z');
         await page.screenshot({path:`test-results/${scenario.name}-combat.png`,fullPage:true});
       }
+      if(scenario.options.hasTouch){
+        await page.locator('#checkpoint-open').tap();
+        const bounds=await page.locator('#checkpoint-dialog').boundingBox();
+        assert.ok(bounds.x>=0&&bounds.y>=0&&bounds.x+bounds.width<=scenario.options.viewport.width+1,'mobile save menu fits viewport width');
+        assert.ok(bounds.height<=scenario.options.viewport.height*.91,'mobile save menu scrolls within the viewport');
+        await page.screenshot({path:`test-results/${scenario.name}-save-menu.png`,fullPage:true});
+        await page.locator('#checkpoint-close').tap();
+      }
       if(scenario.name==='desktop-chromium'){
         await page.locator('#checkpoint-open').click();
         await page.locator('#chapter-select').selectOption('Digit2');
