@@ -699,13 +699,23 @@ impl Game {
         }
     }
     fn safe_tile(tile: Tile) -> bool {
-        tile.supports() && !matches!(tile, Tile::Spikes | Tile::Chomper | Tile::Loose | Tile::Wall | Tile::Gate)
+        tile.supports()
+            && !matches!(
+                tile,
+                Tile::Spikes | Tile::Chomper | Tile::Loose | Tile::Wall | Tile::Gate
+            )
     }
     fn recover_from_void(&mut self) {
-        let destination = self.safe_floor.filter(|&(room, index)| Self::safe_tile(self.tile(room, index)))
-            .or_else(|| self.level.rooms.iter().find_map(|room| {
-                (0..30).find(|&index| Self::safe_tile(self.tile(room.id, index))).map(|index| (room.id, index))
-            }));
+        let destination = self
+            .safe_floor
+            .filter(|&(room, index)| Self::safe_tile(self.tile(room, index)))
+            .or_else(|| {
+                self.level.rooms.iter().find_map(|room| {
+                    (0..30)
+                        .find(|&index| Self::safe_tile(self.tile(room.id, index)))
+                        .map(|index| (room.id, index))
+                })
+            });
         if let Some((room, index)) = destination {
             self.player.room = room;
             self.player.x = tile_center(index);
@@ -1177,7 +1187,11 @@ mod tests {
     fn long_falls_on_plain_stone_do_not_damage_even_at_one_health() {
         let mut g = game();
         g.guards.clear();
-        g.level.rooms[0].rows = ["          ".into(), "          ".into(), "..........".into()];
+        g.level.rooms[0].rows = [
+            "          ".into(),
+            "          ".into(),
+            "..........".into(),
+        ];
         g.player.room = 1;
         g.player.x = 16.0;
         g.player.y = 0.0;
@@ -1185,7 +1199,9 @@ mod tests {
         g.player.grounded = false;
         g.player.health = 1;
         g.player.fall_distance = 500.0;
-        for _ in 0..60 { g.step(Input::default()); }
+        for _ in 0..60 {
+            g.step(Input::default());
+        }
         assert_eq!(g.phase, Phase::Playing);
         assert_eq!(g.player.health, 1);
         assert!(g.player.grounded);
@@ -1195,14 +1211,24 @@ mod tests {
     fn long_drop_between_rooms_is_safe_on_normal_floor() {
         let mut g = game();
         g.guards.clear();
-        g.level.rooms[0].rows = ["          ".into(), "          ".into(), "          ".into()];
+        g.level.rooms[0].rows = [
+            "          ".into(),
+            "          ".into(),
+            "          ".into(),
+        ];
         g.level.rooms[0].links[3] = 2;
-        g.level.rooms[1].rows = ["          ".into(), "          ".into(), "..........".into()];
+        g.level.rooms[1].rows = [
+            "          ".into(),
+            "          ".into(),
+            "..........".into(),
+        ];
         g.player.x = 16.0;
         g.player.y = 180.0;
         g.player.vy = 300.0;
         g.player.grounded = false;
-        for _ in 0..90 { g.step(Input::default()); }
+        for _ in 0..90 {
+            g.step(Input::default());
+        }
         assert_eq!(g.player.room, 2);
         assert_eq!(g.player.health, 3);
         assert_eq!(g.phase, Phase::Playing);
@@ -1212,12 +1238,18 @@ mod tests {
     fn falling_onto_spikes_is_still_lethal() {
         let mut g = game();
         g.guards.clear();
-        g.level.rooms[0].rows = ["          ".into(), "          ".into(), "s.........".into()];
+        g.level.rooms[0].rows = [
+            "          ".into(),
+            "          ".into(),
+            "s.........".into(),
+        ];
         g.player.x = 16.0;
         g.player.y = 0.0;
         g.player.vy = 450.0;
         g.player.grounded = false;
-        for _ in 0..60 { g.step(Input::default()); }
+        for _ in 0..60 {
+            g.step(Input::default());
+        }
         assert_eq!(g.phase, Phase::Dead);
     }
     #[test]
