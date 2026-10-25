@@ -206,3 +206,4 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - First campaign replay exposed a lethal uncareful walk across Palace spikes. Updated the input-only route to jump over marked hazards before engaging guards; no teleport or damage bypass is used. Added browser save/unlock/load/reload verification.
 - All campaign routes and native checkpoint tests passed. Corrected Macroquad logging macro statement placement flagged by strict WASM compilation.
 - Browser verification successfully saved, restored, reloaded the page and restored again. Its final console assertion incorrectly treated the deliberately rejected wrong-code request (HTTP 401) as an unexpected error; adjusted only that expected-response filter.
+- Visual inspection confirmed chapter selection works and exposed a shrine marker obscured by the standing hero. Moved its orb and SAVE label above head height.

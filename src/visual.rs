@@ -306,16 +306,17 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
             let x = (point.tile % COLS) as f32 * 32.0 + 16.0;
             let y = floor_y(point.tile / COLS);
             let blue = Color::new(0.55, 0.85, 1.0, 0.9);
-            draw_circle(x, y - 23.0, 3.0, blue);
+            draw_circle(x, y - 48.0, 4.0, Color::new(0.3, 0.7, 1.0, 0.2));
+            draw_circle(x, y - 48.0, 2.0, blue);
             draw_line(
                 x,
-                y - 18.0,
+                y - 44.0,
                 x,
                 y - 2.0,
                 0.5,
                 Color::new(0.55, 0.85, 1.0, 0.25),
             );
-            crate::draw_crisp_text("SAVE", x - 8.0, y - 29.0, 6.0, blue);
+            crate::draw_crisp_text("SAVE", x - 8.0, y - 54.0, 6.0, blue);
         }
     }
     for guard in &game.guards {
