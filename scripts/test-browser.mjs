@@ -34,11 +34,26 @@ try {
       const response=await page.goto(url);assert.equal(response.status(),200);
       await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'),{timeout:30000});
       await page.waitForTimeout(400);
+      if(scenario.options.hasTouch){
+        const layout=await page.evaluate(()=>{
+          const game=document.querySelector('#game').getBoundingClientRect();
+          const canvas=document.querySelector('canvas').getBoundingClientRect();
+          const deck=document.querySelector('.handheld-controls').getBoundingClientRect();
+          return {game:{x:game.x,y:game.y,width:game.width,height:game.height},canvas:{width:canvas.width,height:canvas.height,bottom:canvas.bottom},deck:{top:deck.top,bottom:deck.bottom},width:innerWidth,height:innerHeight,overflow:document.documentElement.scrollHeight>innerHeight+1};
+        });
+        assert.ok(Math.abs(layout.game.height-layout.height)<2,'handheld fills webview height');
+        assert.ok(Math.abs(layout.game.width-layout.width)<2,'handheld fills webview width');
+        assert.ok(Math.abs(layout.canvas.width/layout.canvas.height-1.6)<.02,'game keeps aspect ratio');
+        assert.ok(layout.deck.top>=layout.canvas.bottom,'controls stay below gameplay');
+        assert.ok(layout.deck.bottom>=layout.height-2&&layout.deck.bottom<=layout.height+1,'controls reach bottom of viewport');
+        assert.equal(layout.overflow,false,'no vertical page scroll in handheld mode');
+      }
+
       await page.screenshot({path:`test-results/${scenario.name}-title.png`,fullPage:true});
       const before=await captureCanvas();
       if(scenario.options.hasTouch) {
         const box=await page.locator('canvas').boundingBox();
-        // Start button in the Rust-rendered title screen, in the 320x264 virtual viewport.
+        // Start button in the Rust-rendered title screen, in the 320x200 game viewport.
         await page.touchscreen.tap(box.x+box.width/2,box.y+box.width*(139/320));
       }else{await page.locator('#play').click();}
       await page.waitForTimeout(1100);
@@ -46,8 +61,7 @@ try {
       await page.screenshot({path:`test-results/${scenario.name}-playing.png`,fullPage:true});
       if(!scenario.options.hasTouch){await page.keyboard.down('ArrowRight');await page.waitForTimeout(1200);await page.keyboard.up('ArrowRight');await page.keyboard.press('Escape');}
       else {
-        const box=await page.locator('canvas').boundingBox();
-        await page.touchscreen.tap(box.x+box.width*97/320,box.y+box.width*240/320);
+        await page.locator('[data-key=ArrowRight]').tap();
       }
       await page.screenshot({path:`test-results/${scenario.name}-controls.png`,fullPage:true});
       if(scenario.engine===chromium) {
@@ -65,10 +79,10 @@ try {
         await page.waitForTimeout(300);
         let touch;
         const touchButton=async(x,pressed)=>{
-          const box=await page.locator('canvas').boundingBox();
+          const box=await page.locator(x===217?'[data-key=KeyX]':'[data-key=KeyZ]').boundingBox();
           touch??=await context.newCDPSession(page);
           await touch.send('Input.dispatchTouchEvent',{type:pressed?'touchStart':'touchEnd',
-            touchPoints:pressed?[{x:box.x+box.width*x/320,y:box.y+box.width*234/320}]:[]});
+            touchPoints:pressed?[{x:box.x+box.width/2,y:box.y+box.height/2}]:[]});
         };
         if(scenario.options.hasTouch)await touchButton(217,true);
         else await page.keyboard.down('x');

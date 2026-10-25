@@ -6,13 +6,43 @@ const engineState=document.querySelector('#engine-state');
 const keys=new Set();
 // Long presses on game controls must remain held input, not open a browser menu.
 gameCanvas.addEventListener('contextmenu',event=>event.preventDefault());
-const keyCodes={KeyT:84,Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
+const touchInputs=new Map();
+const keyCodes={KeyZ:90,KeyX:88,KeyT:84,Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
 function sendKey(code,type='keydown') {
   const event=new KeyboardEvent(type,{code,key:code.startsWith('Key')?code.slice(3):code,bubbles:true,cancelable:true,keyCode:keyCodes[code],which:keyCodes[code]});
   gameCanvas.dispatchEvent(event);
 }
 function tap(code) {sendKey(code);requestAnimationFrame(()=>requestAnimationFrame(()=>sendKey(code,'keyup')));gameCanvas.focus({preventScroll:true});}
+function releaseTouchInputs(){
+  const codes=new Set([...touchInputs.values()].map(entry=>entry.code));
+  for(const {button} of touchInputs.values())button.classList.remove('is-held');
+  touchInputs.clear();
+  for(const code of codes)sendKey(code,'keyup');
+}
+for(const button of document.querySelectorAll('[data-key]')){
+  button.addEventListener('contextmenu',event=>event.preventDefault());
+  button.addEventListener('pointerdown',event=>{
+    event.preventDefault();
+    if(touchInputs.has(event.pointerId))return;
+    const code=button.dataset.key;
+    const alreadyHeld=[...touchInputs.values()].some(entry=>entry.code===code);
+    touchInputs.set(event.pointerId,{button,code});
+    button.setPointerCapture(event.pointerId);button.classList.add('is-held');
+    gameCanvas.focus({preventScroll:true});
+    if(!alreadyHeld)sendKey(code);
+  });
+  const release=event=>{
+    const entry=touchInputs.get(event.pointerId);if(!entry)return;
+    touchInputs.delete(event.pointerId);
+    if(![...touchInputs.values()].some(other=>other.code===entry.code)){
+      entry.button.classList.remove('is-held');sendKey(entry.code,'keyup');
+    }
+  };
+  for(const type of ['pointerup','pointercancel','lostpointercapture'])button.addEventListener(type,release);
+}
+window.addEventListener('orientationchange',releaseTouchInputs);
 function pauseAndRelease() {
+  releaseTouchInputs();
   for(const code of keys)sendKey(code,'keyup');keys.clear();
   sendKey('F12');requestAnimationFrame(()=>sendKey('F12','keyup'));
 }

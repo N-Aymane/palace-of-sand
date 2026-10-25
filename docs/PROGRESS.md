@@ -143,3 +143,9 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Promoted v0.3.0 to https://palace-of-sand.vercel.app. The public build metadata confirms the verified WASM digest; local port 4173 is updated to the same bundle. See `docs/COMBAT.md` for keyboard, touch and Sword practice instructions.
 
 - Production keyboard combat passed. A mobile startup request timed out once; a fresh public mobile check then passed defence and all three touch strikes. CI also passed all four browser scenarios.
+
+## 9 — Full-screen mobile handheld layout (2026-10-25)
+
+- Replaced the small canvas-with-controls presentation on touch devices with a full-height webview shell, safe-area padding, a separate game screen, and a bottom-mounted handheld control deck.
+- Added a physical-style direction pad and A/action and B/parry buttons. Pointer capture supports simultaneous controls and releases held inputs on cancellation, focus loss and orientation changes. All gameplay remains in Rust; the adapter only sends existing keyboard inputs.
+- Gameplay keeps its 8:5 aspect ratio; the mobile deck fills the rest of the screen without stretching the game or requiring page scrolling. Added portrait/landscape viewport and control-placement browser assertions.
