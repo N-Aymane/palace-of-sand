@@ -9,7 +9,7 @@ if(protectedDeployment&&new URL(url).hostname.endsWith('.vercel.app')&&!process.
   try{process.loadEnvFile('.env.local');}catch{}
 }
 let server;
-if(!process.env.TEST_URL){server=spawn(process.execPath,['scripts/serve.mjs'],{stdio:'inherit'});await new Promise(r=>setTimeout(r,1000));}
+if(!process.env.TEST_URL){server=spawn(process.execPath,['scripts/serve.mjs'],{stdio:'inherit',env:{...process.env,SAVE_ACCESS_CODE:'browser-test-save-code',SAVE_SIGNING_KEY:'browser-test-signing-key-not-for-production'}});await new Promise(r=>setTimeout(r,1000));}
 mkdirSync('test-results',{recursive:true});
 const results=[];
 try {
@@ -106,6 +106,34 @@ try {
         await waitCombat(lines=>lines.filter(s=>s.includes('COMBAT_HIT')).length>=3,'holding attack must hit and defeat the guard');
         if(scenario.options.hasTouch)await touchButton(282,false);else await page.keyboard.up('z');
         await page.screenshot({path:`test-results/${scenario.name}-combat.png`,fullPage:true});
+      }
+      if(scenario.name==='desktop-chromium'){
+        await page.locator('#checkpoint-open').click();
+        await page.locator('#chapter-select').selectOption('Digit2');
+        await page.locator('#chapter-start').click();
+        for(let wait=0;wait<100&&!logs.some(line=>line.includes('PALACE_STATUS:2:true'));wait++)await page.waitForTimeout(100);
+        assert.ok(logs.some(line=>line.includes('PALACE_STATUS:2:true')),'chapter selector starts at a real Rust save shrine');
+        await page.locator('#checkpoint-open').click();
+        await page.screenshot({path:'test-results/checkpoint-menu.png',fullPage:true});
+        if(!process.env.TEST_URL||process.env.TEST_SAVE_CODE){
+          await page.locator('#save-code').fill('incorrect-code');
+          await page.locator('#checkpoint-form button[type=submit]').click();
+          await page.waitForFunction(()=>document.querySelector('#checkpoint-feedback').textContent.includes('Incorrect'));
+          assert.equal(await page.locator('#checkpoint-save').isEnabled(),false);
+          await page.locator('#save-code').fill(process.env.TEST_SAVE_CODE??'browser-test-save-code');
+          await page.locator('#checkpoint-form button[type=submit]').click();
+          await page.waitForFunction(()=>!document.querySelector('#checkpoint-save').disabled);
+          await page.locator('#checkpoint-save').click();
+          await page.waitForFunction(()=>document.querySelector('#checkpoint-feedback').textContent.includes('Checkpoint saved'),{timeout:30000});
+          await page.screenshot({path:'test-results/checkpoint-saved.png',fullPage:true});
+          await page.locator('#checkpoint-load').click();
+          for(let wait=0;wait<150&&!logs.some(line=>line.includes('PALACE_NOTICE:Checkpoint restored'));wait++)await page.waitForTimeout(100);
+          assert.ok(logs.some(line=>line.includes('PALACE_NOTICE:Checkpoint restored')),'sealed browser slot loads back into the Rust simulation');
+          await page.reload();await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'));
+          await page.locator('#checkpoint-open').click();await page.locator('#checkpoint-load').click();
+          for(let wait=0;wait<150&&logs.filter(line=>line.includes('PALACE_NOTICE:Checkpoint restored')).length<2;wait++)await page.waitForTimeout(100);
+          assert.ok(logs.filter(line=>line.includes('PALACE_NOTICE:Checkpoint restored')).length>=2,'checkpoint survives page reload');
+        }else await page.locator('#checkpoint-close').click();
       }
       assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'no horizontal overflow');
       writeFileSync(`test-results/${scenario.name}-console.json`,JSON.stringify(logs,null,2));

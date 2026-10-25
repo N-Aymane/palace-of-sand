@@ -17,11 +17,27 @@ fn all_new_chapters_can_be_completed_with_controls() {
                 game.player
             );
             let guard = game.guards.iter().find(|guard| {
-                guard.room == game.player.room
+                game.player.grounded
+                    && guard.room == game.player.room
                     && guard.health > 0
                     && (guard.x - game.player.x).abs() < 105.0
             });
-            let input = if let Some(guard) = guard {
+            let jump_hazard = game.player.grounded
+                && (1..=40).any(|offset| {
+                    let column = ((game.player.x + offset as f32) / 32.0) as usize;
+                    column < 10
+                        && matches!(
+                            game.tile(game.player.room, 20 + column),
+                            Tile::Spikes | Tile::Chomper
+                        )
+                });
+            let input = if jump_hazard && guard.is_none() {
+                Input {
+                    right: true,
+                    up: true,
+                    ..Input::default()
+                }
+            } else if let Some(guard) = guard {
                 if (guard.x - game.player.x).abs() < 50.0 {
                     Input {
                         action: true,
