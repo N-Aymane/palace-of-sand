@@ -42,7 +42,7 @@ Public game: https://palace-of-sand.vercel.app
 
 Released from passing CI run `39449760577`, commit `a5d3292`. Preview was checked with desktop and touch controls before production promotion. Production serves the identical verified WASM digest recorded in `build.json`. The project-scoped alias may require Vercel authentication; share the public game URL above.
 
-## Combat and parry release — 2026-10-21
+## Combat and parry release ï¿½ 2026-10-21
 
 Version `0.3.0`, source commit `cba37fd`, verified by run `39621192204` (24 Rust/level tests, strict lint, release WASM and four browser scenarios). Public URL remains https://palace-of-sand.vercel.app.
 
@@ -52,19 +52,19 @@ See `COMBAT.md` for controls, timing, practice mode and coverage. Preview HTTP v
 
 Production combat checks passed for keyboard and touch. One transient mobile startup timeout was cleared by a fresh run; no gameplay assertion was removed.
 
-## Mobile and safe-fall release — 2026-10-25
+## Mobile and safe-fall release ï¿½ 2026-10-25
 
 Version 0.4.0 is live at https://palace-of-sand.vercel.app. Deployment `dpl_BwGTB2LVWYndYD6hKe65qb1BL249` uses the passing runtime artifact from run `40196162122`. Run `40196288087` added and passed portrait Chromium and simultaneous touch/cancellation coverage without changing runtime code. Total: 28 gameplay/level tests and five browser scenarios. Public production portrait/landscape touch checks passed after promotion.
 
 WASM SHA-256: `5657a76f0378a02b375f09e7361443a9cf474127be1cee6f965dd3491bc82f0f`. Local port 4173 uses the same bundle. The mobile shell and safe-fall behavior are documented in `MOBILE.md`.
 
-## Revised gameplay release — 2026-10-25
+## Revised gameplay release ï¿½ 2026-10-25
 
 Version 0.5.0 (source `64f4672`) passed run `40197719983`: 32 gameplay/level tests, formatting, strict library/WASM Clippy, release WASM and five browser scenarios. Public portrait and landscape touch/combat checks passed after promotion.
 
 Deployment: `dpl_6WpFnx2eKigkHcDHP6111W2b7Xgi`. WASM SHA-256: `592e7758904a98f8818e64d524722a1351c550c92fe25b9f4dab03551d97d411`. Rules: only extremely large drops kill; spikes take one heart per contact; sword pickup supports held action, same-floor reach and a pre-landing input buffer.
 
-## Continued gameplay polish — v0.5.1
+## Continued gameplay polish ï¿½ v0.5.1
 
 Source `d840e9e`, run `40213901337`: 33 gameplay/level tests, strict lint, release WASM and five browser scenarios passed. Added persistent NO SWORD / ARMED inventory status and a pre-landing dangerous-fall warning.
 
@@ -84,4 +84,5 @@ Source `36a7088`, run `40220708381`: formatting, strict native/WASM Clippy, 36 R
 Production deployment `dpl_9sikTnCe79yfw4SMTkeu7xC3xd75` is promoted to https://palace-of-sand.vercel.app. WASM SHA-256: `bc77eab1d3eb8b30e55b9f54f0f19f2086be4f2b901b3673b14fc7e638d0e482`. Public metadata matches the verified bundle, and local port 4173 serves that same bundle.
 
 The release includes a Node 24 checkpoint function. `SAVE_ACCESS_CODE` and `SAVE_SIGNING_KEY` are configured as server-only production secrets. Their values are deliberately excluded from Git and documentation. A staged Vercel API check rejected locked saving, accepted the private code, and roundtripped an actual Rust checkpoint. See `SAVES-AND-CAMPAIGN.md` for operation and recovery details.
-`nPublic post-promotion desktop and portrait Chromium checks passed, including wrong-code rejection, private-code unlock, real Rust save/load and restoration again after a page reload. Mobile save-menu bounds and existing controls also passed.
+
+Public post-promotion desktop and portrait Chromium checks passed, including wrong-code rejection, private-code unlock, real Rust save/load and restoration again after a page reload. Mobile save-menu bounds and existing controls also passed.
