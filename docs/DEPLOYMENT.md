@@ -69,3 +69,10 @@ Deployment: `dpl_6WpFnx2eKigkHcDHP6111W2b7Xgi`. WASM SHA-256: `592e7758904a98f88
 Source `d840e9e`, run `40213901337`: 33 gameplay/level tests, strict lint, release WASM and five browser scenarios passed. Added persistent NO SWORD / ARMED inventory status and a pre-landing dangerous-fall warning.
 
 Production: https://palace-of-sand.vercel.app, deployment `dpl_JC36YJbC5TKZ7pcJpj6KXNGoqtH9`. WASM SHA-256: `d360a199bc699a6488c3b2a0d6c2bf49bb0257ae1251678bda741eb4f8e59ccf`. Local port 4173 uses the same bundle.
+
+### v0.5.2 — sword identification
+
+- Source: 0ec42a6; GitHub run 40216214978 passed formatting, strict Clippy, 33 gameplay tests, release WASM and five browser scenarios.
+- Deployment: dpl_7Bv3ta9THzTiGmcxomRVWP5HdUGM, promoted to https://palace-of-sand.vercel.app.
+- WASM SHA-256: 0015c08df5e1f92e9a7bbf2c144cc79b52d10f6530e1017d8b66d1167f77855f. Public build metadata matches the verified bundle. Local port 4173 serves the same release.
+

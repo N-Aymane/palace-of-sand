@@ -193,3 +193,6 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - User screenshot showed the room 11 skeleton, not the collectible sword. Its full atlas cell was compressed vertically, making bones resemble a blade.
 - Crop skeleton art to its visible bounds, enlarge the actual sword slightly, and label it SWORD with a pointer. Nearby bones now have an explicit contextual hint. Pickup rules and level geometry are unchanged.
 - Verification pending CI release build and browser checks.
+
+- v0.5.2 passed run 40216214978 (33 gameplay tests and five browser scenarios) and is deployed publicly and on local port 4173. Public metadata matches the verified artifact.
+- Public portrait Chromium touch/layout smoke check passed after promotion.
