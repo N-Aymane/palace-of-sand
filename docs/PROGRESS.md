@@ -187,3 +187,9 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Promoted deployment `dpl_JC36YJbC5TKZ7pcJpj6KXNGoqtH9` to https://palace-of-sand.vercel.app. Verified artifact SHA-256: `d360a199bc699a6488c3b2a0d6c2bf49bb0257ae1251678bda741eb4f8e59ccf`.
 
 - Public v0.5.1 portrait and landscape touch/combat checks passed. Production metadata matches the tested artifact exactly. All code, controls and release documentation are pushed to the GitHub repository.
+
+### Sword identification fix (v0.5.2)
+
+- User screenshot showed the room 11 skeleton, not the collectible sword. Its full atlas cell was compressed vertically, making bones resemble a blade.
+- Crop skeleton art to its visible bounds, enlarge the actual sword slightly, and label it SWORD with a pointer. Nearby bones now have an explicit contextual hint. Pickup rules and level geometry are unchanged.
+- Verification pending CI release build and browser checks.

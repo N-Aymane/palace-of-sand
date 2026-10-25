@@ -225,12 +225,38 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
                 1.0,
             ),
             Tile::Sword if !game.player.sword => {
-                prop(art, 4, Rect::new(x + 6.0, y - 13.0, 22.0, 16.0), WHITE, 1.0)
+                prop(art, 4, Rect::new(x + 6.0, y - 18.0, 22.0, 20.0), WHITE, 1.0);
+                crate::draw_crisp_text("SWORD", x + 3.0, y - 22.0, 7.0, GOLD);
+                draw_triangle(
+                    vec2(x + 14.0, y - 21.0),
+                    vec2(x + 20.0, y - 21.0),
+                    vec2(x + 17.0, y - 18.0),
+                    GOLD,
+                );
             }
             Tile::Potion if !runtime.consumed => {
                 prop(art, 5, Rect::new(x + 6.0, y - 17.0, 20.0, 18.0), WHITE, 1.0)
             }
-            Tile::Skeleton => prop(art, 6, Rect::new(x - 1.0, y - 10.0, 36.0, 13.0), WHITE, 1.0),
+            Tile::Skeleton => {
+                // Crop the atlas's large transparent margins so the skull and ribs
+                // remain recognizable instead of flattening into a blade-like line.
+                draw_texture_ex(
+                    &art.props,
+                    x - 1.0,
+                    y - 12.0,
+                    WHITE,
+                    DrawTextureParams {
+                        source: Some(Rect::new(
+                            art.props.width() * 0.503,
+                            art.props.height() * 0.704,
+                            art.props.width() * 0.244,
+                            art.props.height() * 0.154,
+                        )),
+                        dest_size: Some(vec2(36.0, 12.0)),
+                        ..Default::default()
+                    },
+                );
+            }
             Tile::Spikes => prop(art, 7, Rect::new(x - 1.0, y - 14.0, 34.0, 16.0), WHITE, 1.0),
             Tile::Opener | Tile::Closer => {
                 let tint = if runtime.pressed {
@@ -377,12 +403,20 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
                 && (floor_y(index / COLS) - p.y).abs() < 8.0
                 && ((index % COLS) as f32 * 32.0 + 16.0 - p.x).abs() < 44.0
         });
+    let nearby_bones = !p.sword
+        && (0..30).any(|index| {
+            game.tile(room, index) == Tile::Skeleton
+                && (floor_y(index / COLS) - p.y).abs() < 8.0
+                && ((index % COLS) as f32 * 32.0 + 16.0 - p.x).abs() < 44.0
+        });
     let hint = if nearby_sword {
         "Hold A / Z / SHIFT near the sword to pick it up"
     } else if nearby_guard && p.sword {
         "Z / SHIFT: Strike   X / UP: Block - time it to parry"
     } else if nearby_guard {
         "You need a sword. Retreat and find it, or try Sword practice."
+    } else if nearby_bones {
+        "Old bones. Find the weapon marked SWORD."
     } else if !p.sword {
         "Find the sword. Explore the western dungeon."
     } else {
