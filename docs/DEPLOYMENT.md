@@ -51,3 +51,9 @@ Production deployment: `dpl_FGhMSFtQ48wJwEdQg4fMRgc1unGt`. Verified WASM SHA-256
 See `COMBAT.md` for controls, timing, practice mode and coverage. Preview HTTP verification used the authenticated Vercel CLI. Development-environment retrieval was rejected by automatic approval review, so no environment payload was downloaded; browser verification also ran locally and on public production.
 
 Production combat checks passed for keyboard and touch. One transient mobile startup timeout was cleared by a fresh run; no gameplay assertion was removed.
+
+## Mobile and safe-fall release — 2026-10-25
+
+Version 0.4.0 is live at https://palace-of-sand.vercel.app. Deployment `dpl_BwGTB2LVWYndYD6hKe65qb1BL249` uses the passing runtime artifact from run `40196162122`. Run `40196288087` added and passed portrait Chromium and simultaneous touch/cancellation coverage without changing runtime code. Total: 28 gameplay/level tests and five browser scenarios. Public production portrait/landscape touch checks passed after promotion.
+
+WASM SHA-256: `5657a76f0378a02b375f09e7361443a9cf474127be1cee6f965dd3491bc82f0f`. Local port 4173 uses the same bundle. The mobile shell and safe-fall behavior are documented in `MOBILE.md`.

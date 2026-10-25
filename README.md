@@ -20,7 +20,7 @@ Open http://127.0.0.1:4173. The current cinematic edition adds interpolated anim
 
 ## Controls
 
-Arrow keys move, jump/climb, and crouch. Shift is careful step / grab / pickup / sword attack. Hold X (or Up near a guard) to block; time the raise just before impact to parry and stagger. Z or Shift strikes; hold to repeat. T / Sword practice starts an immediate duel. Escape pauses. R restarts. Mobile has a multi-touch direction pad, attack/action button, and dedicated parry button.
+Arrow keys move, jump/climb, and crouch. Shift is careful step / grab / pickup / sword attack. Hold X (or Up near a guard) to block; time the raise just before impact to parry and stagger. Z or Shift strikes; hold to repeat. T / Sword practice starts an immediate duel. Escape pauses. R restarts. Mobile fills the webview with a handheld layout: the game screen above, a bottom D-pad, A/action and B/parry buttons, and simultaneous touch support. Normal stone landings cause no fall damage; unmarked bottom gaps return to the last safe floor. Spikes and blade traps remain hazardous.
 
 ## Project record
 

@@ -157,3 +157,10 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Added regression cases for a high-speed long fall at one health, a multi-room drop, a spike landing, and recovery from an unmarked bottom gap. Release version: 0.4.0.
 
 - Local desktop and landscape touch layout/combat checks passed. Added explicit portrait Chromium sizing and simultaneous direction/action cancellation checks alongside the existing WebKit portrait/landscape checks.
+
+### Published mobile and safe-fall release
+
+- Released v0.4.0 from passing run `40196162122` (source `a5756e5`). The expanded portrait/multi-touch suite also passed run `40196288087` (test-only commit `b1bdc03`): 27 focused tests, the complete campaign input replay, formatting, strict native/WASM Clippy, release WASM, and five Chromium/WebKit scenarios.
+- Public production portrait and landscape Chromium checks passed, including full webview dimensions, bottom controls, no page scrolling, two-finger input/cancellation and touch combat.
+- Production deployment: `dpl_BwGTB2LVWYndYD6hKe65qb1BL249`; https://palace-of-sand.vercel.app. WASM SHA-256: `5657a76f0378a02b375f09e7361443a9cf474127be1cee6f965dd3491bc82f0f`.
+- Local http://127.0.0.1:4173 serves the same v0.4.0 runtime bundle. See `docs/MOBILE.md` for layout, input and fall rules.
