@@ -4,6 +4,8 @@ use level::{COLS, Level, ROOM_H, ROOM_W, TILE_H, TILE_W, Tile, floor_y, tile_cen
 
 pub const DT: f32 = 1.0 / 60.0;
 const HEIGHT: f32 = 38.0;
+/// Only drops exceeding two complete room heights are lethal.
+pub const FATAL_FALL_DISTANCE: f32 = ROOM_H * 2.0;
 const HALF_WIDTH: f32 = 6.0;
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
@@ -116,6 +118,7 @@ pub struct Game {
     attack_hit: bool,
     attack_buffer: u8,
     safe_floor: Option<(u8, usize)>,
+    spike_contact: Option<(u8, usize)>,
 }
 impl Game {
     pub fn new(level: Level) -> Self {
@@ -174,6 +177,7 @@ impl Game {
             attack_hit: false,
             attack_buffer: 0,
             safe_floor: None,
+            spike_contact: None,
         }
     }
     pub fn restart(&mut self) {
@@ -657,11 +661,13 @@ impl Game {
                         } else {
                             0
                         };
+                        let distance = self.player.fall_distance;
                         self.player.fall_distance = 0.0;
                         self.set_state(PlayerState::Idle);
                         self.events.push(Event::Land);
-                        // Ordinary landings are safe at every height. Tile hazards
-                        // remain responsible for damage after landing.
+                        if distance > FATAL_FALL_DISTANCE {
+                            self.die();
+                        }
                         break;
                     }
                 }
@@ -706,6 +712,10 @@ impl Game {
             )
     }
     fn recover_from_void(&mut self) {
+        if self.player.fall_distance > FATAL_FALL_DISTANCE {
+            self.die();
+            return;
+        }
         let destination = self
             .safe_floor
             .filter(|&(room, index)| Self::safe_tile(self.tile(room, index)))
@@ -779,24 +789,44 @@ impl Game {
     }
     fn interact(&mut self, input: Input, action: bool) {
         if !self.player.grounded {
+            self.spike_contact = None;
             return;
         }
         let Some(index) = self.floor_index() else {
             return;
         };
         let room = self.player.room;
+        if self.tile(room, index) != Tile::Spikes {
+            self.spike_contact = None;
+        }
+        // Accept a held action and a short pre-landing tap, with a generous
+        // same-floor reach instead of requiring an exact tile/key-edge match.
+        if !self.player.sword && (input.action || self.attack_buffer > 0) {
+            let row_start = index / COLS * COLS;
+            if let Some(sword) = (row_start..row_start + COLS).find(|&tile| {
+                self.tile(room, tile) == Tile::Sword
+                    && !self.runtime(room, tile).consumed
+                    && (tile_center(tile) - self.player.x).abs() <= 28.0
+            }) {
+                self.tiles[usize::from(room) - 1][sword].consumed = true;
+                self.player.sword = true;
+                self.attack_buffer = 0;
+                self.last_combat_event = Event::Sword;
+                self.combat_feedback_ticks = 24;
+                self.events.push(Event::Sword);
+            }
+        }
         match self.tile(room, index) {
             Tile::Opener | Tile::Closer => self.activate(room, index),
             Tile::Loose => self.start_loose(index),
             Tile::Spikes => {
-                if !input.action && self.player.invulnerable == 0 {
-                    self.hurt(3);
+                if self.spike_contact != Some((room, index))
+                    && (!input.action || self.player.landing_ticks > 0)
+                    && self.player.invulnerable == 0
+                {
+                    self.spike_contact = Some((room, index));
+                    self.hurt(1);
                 }
-            }
-            Tile::Sword if action && !self.player.sword => {
-                self.tiles[usize::from(room) - 1][index].removed = false;
-                self.player.sword = true;
-                self.events.push(Event::Sword);
             }
             Tile::Potion if action && !self.runtime(room, index).consumed => {
                 self.player.health = (self.player.health + 1).min(3);
@@ -979,7 +1009,7 @@ mod tests {
         assert_eq!(g.runtime(5, 9).gate_ticks, 0);
     }
     #[test]
-    fn spikes_kill_running_but_allow_careful_steps() {
+    fn spikes_take_one_heart_but_allow_careful_steps() {
         let mut g = game();
         place(&mut g, 13, 5);
         g.step(Input {
@@ -988,7 +1018,12 @@ mod tests {
         });
         assert_eq!(g.player.health, 3);
         g.step(Input::default());
-        assert_eq!(g.phase, Phase::Dead);
+        assert_eq!(g.player.health, 2);
+        assert_eq!(g.phase, Phase::Playing);
+        for _ in 0..180 {
+            g.step(Input::default());
+        }
+        assert_eq!(g.player.health, 2, "one heart per contact, not per frame");
     }
     #[test]
     fn exit_requires_open_door() {
@@ -1198,7 +1233,7 @@ mod tests {
         g.player.vy = 450.0;
         g.player.grounded = false;
         g.player.health = 1;
-        g.player.fall_distance = 500.0;
+        g.player.fall_distance = 0.0;
         for _ in 0..60 {
             g.step(Input::default());
         }
@@ -1235,7 +1270,7 @@ mod tests {
         assert!(g.player.grounded);
     }
     #[test]
-    fn falling_onto_spikes_is_still_lethal() {
+    fn falling_onto_spikes_removes_one_heart() {
         let mut g = game();
         g.guards.clear();
         g.level.rooms[0].rows = [
@@ -1250,7 +1285,8 @@ mod tests {
         for _ in 0..60 {
             g.step(Input::default());
         }
-        assert_eq!(g.phase, Phase::Dead);
+        assert_eq!(g.player.health, 2);
+        assert_eq!(g.phase, Phase::Playing);
     }
     #[test]
     fn unmarked_bottom_gap_recovers_to_last_safe_floor_without_damage() {
@@ -1269,6 +1305,81 @@ mod tests {
         assert_eq!(g.player.health, 3);
         assert_eq!(g.phase, Phase::Playing);
         assert!(g.player.grounded);
+    }
+    #[test]
+    fn extremely_large_fall_is_lethal_even_during_damage_immunity() {
+        let mut g = game();
+        g.guards.clear();
+        place(&mut g, 3, 12);
+        g.player.y -= 2.0;
+        g.player.grounded = false;
+        g.player.vy = 300.0;
+        g.player.fall_distance = FATAL_FALL_DISTANCE + 1.0;
+        g.player.invulnerable = 65;
+        g.step(Input::default());
+        assert_eq!(g.phase, Phase::Dead);
+    }
+    #[test]
+    fn spikes_can_remove_the_last_heart_and_hurt_again_after_reentry() {
+        let mut g = game();
+        g.guards.clear();
+        place(&mut g, 13, 5);
+        g.player.health = 2;
+        g.step(Input::default());
+        assert_eq!(g.player.health, 1);
+        place(&mut g, 3, 12);
+        g.step(Input::default());
+        place(&mut g, 13, 5);
+        g.step(Input::default());
+        assert_eq!(g.phase, Phase::Dead);
+    }
+    #[test]
+    fn sword_pickup_accepts_held_action_and_nearby_reach() {
+        let mut g = game();
+        g.guards.clear();
+        place(&mut g, 15, 21);
+        let held = Input {
+            action: true,
+            ..Input::default()
+        };
+        g.step(held);
+        assert!(!g.player.sword);
+        g.player.x = tile_center(22) - 27.0;
+        g.step(held);
+        assert!(g.player.sword, "no second button press required");
+        assert!(g.runtime(15, 22).consumed);
+        assert!(g.tile(15, 22).supports(), "pickup preserves floor");
+        assert!(g.events.contains(&Event::Sword));
+        g.step(held);
+        assert!(
+            !g.events.contains(&Event::Sword),
+            "item cannot be collected twice"
+        );
+    }
+    #[test]
+    fn sword_pickup_accepts_action_just_before_landing_but_not_another_floor() {
+        let mut g = game();
+        g.guards.clear();
+        place(&mut g, 15, 22);
+        g.player.y -= 2.0;
+        g.player.grounded = false;
+        g.player.vy = 0.0;
+        g.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        assert!(!g.player.sword);
+        for _ in 0..8 {
+            g.step(Input::default());
+        }
+        assert!(g.player.sword);
+        let mut other = game();
+        place(&mut other, 15, 12);
+        other.step(Input {
+            action: true,
+            ..Input::default()
+        });
+        assert!(!other.player.sword);
     }
     #[test]
     fn jump_returns_to_floor() {

@@ -326,6 +326,7 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
     actor(art, pose, position, tint, animation.blend, time);
     if game.combat_feedback_ticks > 0 {
         let (label, color) = match game.last_combat_event {
+            Event::Sword => ("SWORD READY", Color::new(1.0, 0.89, 0.6, 1.0)),
             Event::Parry => ("PARRY!", Color::new(0.6, 0.88, 1.0, 1.0)),
             Event::Hit => ("HIT", Color::new(1.0, 0.65, 0.35, 1.0)),
             _ => ("BLOCK", Color::new(1.0, 0.89, 0.6, 1.0)),
@@ -370,7 +371,15 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
     let nearby_guard = game.guards.iter().any(|g| {
         g.health > 0 && g.room == p.room && (g.y - p.y).abs() < 16.0 && (g.x - p.x).abs() < 110.0
     });
-    let hint = if nearby_guard && p.sword {
+    let nearby_sword = !p.sword
+        && (0..30).any(|index| {
+            game.tile(room, index) == Tile::Sword
+                && (floor_y(index / COLS) - p.y).abs() < 8.0
+                && ((index % COLS) as f32 * 32.0 + 16.0 - p.x).abs() < 44.0
+        });
+    let hint = if nearby_sword {
+        "Hold A / Z / SHIFT near the sword to pick it up"
+    } else if nearby_guard && p.sword {
         "Z / SHIFT: Strike   X / UP: Block - time it to parry"
     } else if nearby_guard {
         "You need a sword. Retreat and find it, or try Sword practice."

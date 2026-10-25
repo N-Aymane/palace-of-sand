@@ -164,3 +164,10 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Public production portrait and landscape Chromium checks passed, including full webview dimensions, bottom controls, no page scrolling, two-finger input/cancellation and touch combat.
 - Production deployment: `dpl_BwGTB2LVWYndYD6hKe65qb1BL249`; https://palace-of-sand.vercel.app. WASM SHA-256: `5657a76f0378a02b375f09e7361443a9cf474127be1cee6f965dd3491bc82f0f`.
 - Local http://127.0.0.1:4173 serves the same v0.4.0 runtime bundle. See `docs/MOBILE.md` for layout, input and fall rules.
+
+## 10 — Revised falls, single-heart spikes and reliable sword pickup
+
+- User clarified that truly large falls should kill. Only drops exceeding two full room heights (378 logical pixels / six floor levels) are lethal; shorter drops remain safe. Huge falls also remain lethal during combat damage immunity.
+- Spikes remove one heart per contact instead of instant death. Staying on the same spike tile does not repeatedly drain health; leaving and entering again can inflict another hit. A final remaining heart can still be lost.
+- Sword pickup accepts holding action while approaching, a nearby same-floor reach of 28 pixels, and a short pre-landing tap. Collection is recorded once and preserves the supporting floor.
+- Added regression tests for lethal huge falls, repeated spike contact, last-heart spike damage, held/nearby pickup, pre-landing pickup and floor separation.
