@@ -196,3 +196,10 @@ The user explicitly asked to implement graphics and physics changes rather than 
 
 - v0.5.2 passed run 40216214978 (33 gameplay tests and five browser scenarios) and is deployed publicly and on local port 4173. Public metadata matches the verified artifact.
 - Public portrait Chromium touch/layout smoke check passed after promotion.
+
+### Code-protected shrines and campaign (v0.6.0)
+
+- Added versioned, validated Rust checkpoints at safe shrines. Save authorization and authenticated encryption run on the server; one sealed save slot stays in the browser.
+- Added three original follow-on chapters (Courtyard, Cistern, Palace), carrying the campaign timer forward. Later chapters start armed. Chapter selection is available in Save / Load.
+- Added code unlock dialog, save/load bridge through the Macroquad filesystem plugin, stable save markers and a timed chomper trap.
+- Added API authorization/tamper tests, checkpoint roundtrip tests, campaign transition tests and input-only playthroughs. Full verification is pending CI.

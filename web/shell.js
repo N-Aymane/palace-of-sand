@@ -7,9 +7,10 @@ const keys=new Set();
 // Long presses on game controls must remain held input, not open a browser menu.
 gameCanvas.addEventListener('contextmenu',event=>event.preventDefault());
 const touchInputs=new Map();
-const keyCodes={KeyZ:90,KeyX:88,KeyT:84,Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
+const keyCodes={KeyZ:90,KeyX:88,KeyT:84,KeyS:83,KeyL:76,Enter:13,Escape:27,KeyR:82,KeyM:77,F12:123,ArrowLeft:37,ArrowUp:38,ArrowRight:39,ArrowDown:40,ShiftLeft:16,ShiftRight:16};
 function sendKey(code,type='keydown') {
-  const event=new KeyboardEvent(type,{code,key:code.startsWith('Key')?code.slice(3):code,bubbles:true,cancelable:true,keyCode:keyCodes[code],which:keyCodes[code]});
+  const keyCode=keyCodes[code]??(code.startsWith('Digit')?48+Number(code.slice(5)):undefined);
+  const event=new KeyboardEvent(type,{code,key:code.startsWith('Key')?code.slice(3):code,bubbles:true,cancelable:true,keyCode,which:keyCode});
   gameCanvas.dispatchEvent(event);
 }
 function tap(code) {sendKey(code);requestAnimationFrame(()=>requestAnimationFrame(()=>sendKey(code,'keyup')));gameCanvas.focus({preventScroll:true});}
@@ -70,13 +71,14 @@ for(const method of ['log','info']){
 const originalLog=console[method].bind(console);
 console[method]=(...args)=>{
   originalLog(...args);
+  for(const arg of args)if(typeof arg==='string')window.palaceCheckpoint.message(arg);
   if(args.some(arg=>String(arg).includes('PALACE_GRAPHICS_READY'))){
     loading.classList.add('hidden');engineState.textContent='CINEMATIC EDITION / READY';
     requestAnimationFrame(()=>{gameCanvas.focus({preventScroll:true});if(muted)tap('KeyM');});
   }
 };
 }
-const readyPlugin={name:'palace_shell',version:1,register_plugin(){},on_init(){
+const readyPlugin={name:'palace_shell',version:1,register_plugin(imports){window.palaceCheckpoint.register(imports);},on_init(){
   engineState.textContent='LOADING CINEMATIC ART';
   document.querySelector('#loading-text').textContent='Lighting the dungeon…';
   loading.querySelector('small').textContent='Loading detailed environments and character animation';

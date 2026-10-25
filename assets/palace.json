@@ -1,0 +1,151 @@
+{
+  "start": {
+    "tile": 22,
+    "facing": 1,
+    "room": 1
+  },
+  "reference": "Original authored campaign chapter; inspired by DOS dungeon mechanics",
+  "rooms": [
+    {
+      "switches": [
+        {
+          "opens": true,
+          "targets": [
+            {
+              "tile": 22,
+              "room": 2
+            }
+          ],
+          "tile": 24
+        }
+      ],
+      "rows": [
+        "##########",
+        "          ",
+        "..o.+....."
+      ],
+      "links": [
+        0,
+        2,
+        0,
+        0
+      ],
+      "id": 1,
+      "guard": null
+    },
+    {
+      "switches": [],
+      "rows": [
+        "##########",
+        "          ",
+        "..g......."
+      ],
+      "links": [
+        1,
+        3,
+        0,
+        0
+      ],
+      "id": 2,
+      "guard": {
+        "tile": 26,
+        "facing": -1
+      }
+    },
+    {
+      "switches": [],
+      "rows": [
+        "##########",
+        "          ",
+        "..oss..p.."
+      ],
+      "links": [
+        2,
+        4,
+        0,
+        0
+      ],
+      "id": 3,
+      "guard": {
+        "tile": 28,
+        "facing": -1
+      }
+    },
+    {
+      "switches": [],
+      "rows": [
+        "##########",
+        "          ",
+        "..o..c...."
+      ],
+      "links": [
+        3,
+        5,
+        0,
+        0
+      ],
+      "id": 4,
+      "guard": {
+        "tile": 28,
+        "facing": -1
+      }
+    },
+    {
+      "switches": [],
+      "rows": [
+        "##########",
+        "          ",
+        "..o.ss.p.."
+      ],
+      "links": [
+        4,
+        6,
+        0,
+        0
+      ],
+      "id": 5,
+      "guard": {
+        "tile": 28,
+        "facing": -1
+      }
+    },
+    {
+      "switches": [
+        {
+          "opens": true,
+          "targets": [
+            {
+              "tile": 27,
+              "room": 6
+            }
+          ],
+          "tile": 24
+        }
+      ],
+      "rows": [
+        "##########",
+        "          ",
+        "..o.+..xe."
+      ],
+      "links": [
+        5,
+        0,
+        0,
+        0
+      ],
+      "id": 6,
+      "guard": null
+    }
+  ],
+  "save_points": [
+    {
+      "tile": 22,
+      "room": 1
+    },
+    {
+      "tile": 22,
+      "room": 6
+    }
+  ],
+  "armed_start": true
+}

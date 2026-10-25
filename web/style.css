@@ -48,3 +48,15 @@
   #game .canvas-wrap{border-width:4px 10px}
 }
 @media(pointer:coarse) and (max-width:360px){.handheld-controls{padding-left:12px;padding-right:12px}.action-pad{gap:9px}.game-toolbar{font-size:8px}.game-toolbar button{padding:8px 4px}}
+
+/* Shrine checkpoint menu remains usable above the handheld controls. */
+#checkpoint-dialog{width:min(480px,94vw);max-height:90dvh;overflow:auto;padding:28px;border:1px solid #8c724e;border-radius:12px;background:#191820;color:#e5d8bf;box-shadow:0 20px 100px #000b;font:14px/1.6 system-ui,sans-serif}
+#checkpoint-dialog::backdrop{background:#08070dcc}
+#checkpoint-dialog h2{font:32px Georgia,serif;margin:8px 0 18px;color:#e7c58a}
+#checkpoint-dialog p{margin:12px 0}.save-heading{display:flex;align-items:center;justify-content:space-between}.save-heading p{margin:0}
+#checkpoint-dialog button{border:1px solid #7d6649;padding:10px 14px;min-height:44px;background:#d2ae72;color:#191820;border-radius:5px;font:inherit;cursor:pointer}
+#checkpoint-dialog button:disabled{opacity:.45;cursor:default}#checkpoint-close{font-size:22px!important;background:transparent!important;color:#ddc8a7!important;border:0!important}
+.save-unlock,.save-actions{display:flex;gap:10px;margin:8px 0 16px}.save-unlock input{min-width:0;flex:1;background:#0f1016;color:#f1e2c9;border:1px solid #655a4b;padding:10px;border-radius:4px;font:inherit}.save-actions>*{flex:1}
+#checkpoint-feedback{min-height:24px;color:#9cd4e4}#checkpoint-dialog small,#checkpoint-slot{color:#b2a99c}#shrine-status{padding:10px 12px;background:#252735;border-left:2px solid #8dc9e2}
+@media(pointer:coarse){#checkpoint-open{font-size:8px;padding-inline:4px}#checkpoint-dialog{padding:20px}.save-actions{flex-wrap:wrap}#checkpoint-dialog h2{font-size:27px}}
+.save-unlock select{min-width:0;flex:1;background:#0f1016;color:#f1e2c9;border:1px solid #655a4b;padding:10px;border-radius:4px;font:inherit}#checkpoint-dialog hr{border:0;border-top:1px solid #4a4237;margin:24px 0}

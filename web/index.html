@@ -28,7 +28,7 @@
       </div>
       <div class="game-toolbar">
         <button id="play" type="button"><span aria-hidden="true">▷</span> Play / resume</button>
-        <div class="toolbar-right"><button id="duel" type="button" title="Sword practice (T)">Sword practice</button><button id="restart" type="button" title="Restart the level (R)">Restart <kbd>R</kbd></button><button id="sound" type="button" aria-pressed="false">Sound on</button><button id="fullscreen" type="button" aria-label="Enter fullscreen">⛶ <span>Fullscreen</span></button></div>
+        <div class="toolbar-right"><button id="checkpoint-open" type="button">Save / Load</button><button id="duel" type="button" title="Sword practice (T)">Sword practice</button><button id="restart" type="button" title="Restart the level (R)">Restart <kbd>R</kbd></button><button id="sound" type="button" aria-pressed="false">Sound on</button><button id="fullscreen" type="button" aria-label="Enter fullscreen">⛶ <span>Fullscreen</span></button></div>
       </div>
       <section class="handheld-controls" aria-label="Touch game controls">
         <div class="console-label"><span>PALACE OF SAND</span><span>POCKET EDITION</span></div>
@@ -56,7 +56,25 @@
     </section>
     <footer><p>A love letter to the cinematic platformer.<br><span>Original artwork & sound. Inspired by Prince of Persia for DOS.</span></p><a href="https://github.com/N-Aymane/palace-of-sand" target="_blank" rel="noopener">THE MAKING OF <span aria-hidden="true">↗</span></a></footer>
   </main>
+  <dialog id="checkpoint-dialog" aria-labelledby="checkpoint-title">
+    <form id="checkpoint-form">
+      <div class="save-heading"><p class="overline">A MOMENT OF SAFETY</p><button id="checkpoint-close" type="button" aria-label="Close save menu">×</button></div>
+      <h2 id="checkpoint-title">Keep your place.</h2>
+      <p>Stand beside a blue <strong>SAVE</strong> shrine to save. Your checkpoint stays on this browser.</p>
+      <p id="shrine-status">Find a SAVE shrine to create a checkpoint.</p>
+      <label for="save-code">Save access code</label>
+      <div class="save-unlock"><input id="save-code" type="password" autocomplete="off" maxlength="200" placeholder="Enter your private code"><button type="submit">Unlock</button></div>
+      <p id="checkpoint-feedback" role="status" aria-live="polite"></p>
+      <div class="save-actions"><button id="checkpoint-save" type="button" disabled>Save checkpoint</button><button id="checkpoint-load" type="button" disabled>Load checkpoint</button></div>
+      <p id="checkpoint-slot">No saved checkpoint yet.</p>
+      <hr>
+      <label for="chapter-select">Start a chapter</label>
+      <div class="save-unlock"><select id="chapter-select"><option value="Digit1">I · The Dungeon</option><option value="Digit2">II · The Courtyard</option><option value="Digit3">III · The Cistern</option><option value="Digit4">IV · The Palace</option></select><button id="chapter-start" type="button">Start new run</button></div>
+      <small>Starting a chapter replaces this run. Your saved checkpoint stays available.</small>
+      <small>Loading replaces the current run. Closing this menu leaves the game paused; press Play to continue.</small>
+    </form>
+  </dialog>
   <script src="/mq.js"></script>
-  <script src="/shell.js"></script>
+  <script src="/checkpoint.js"></script><script src="/shell.js"></script>
 </body>
 </html>

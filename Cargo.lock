@@ -317,7 +317,7 @@ dependencies = [
 
 [[package]]
 name = "palace-of-sand"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "macroquad",
  "serde",

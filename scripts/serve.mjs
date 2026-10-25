@@ -1,9 +1,14 @@
 import http from 'node:http';
 import { createReadStream, statSync } from 'node:fs';
 import { resolve, extname, sep } from 'node:path';
+import checkpoint from '../server/checkpoint.mjs';
+try {process.loadEnvFile('.env.save.local');}catch{}
 const root=resolve('dist');
 const mime={'.html':'text/html; charset=utf-8','.css':'text/css','.js':'application/javascript','.wasm':'application/wasm','.json':'application/json','.svg':'image/svg+xml'};
 http.createServer((req,res)=>{
+  if(new URL(req.url,'http://localhost').pathname==='/api/checkpoint'){
+    checkpoint(req,res).catch(()=>{res.statusCode=500;res.end('{"error":"Save service unavailable."}');});return;
+  }
   try {
     const path=resolve(root,'.'+decodeURIComponent(new URL(req.url,'http://localhost').pathname));
     const file=path===root?resolve(root,'index.html'):path;

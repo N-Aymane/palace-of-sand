@@ -258,6 +258,30 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
                 );
             }
             Tile::Spikes => prop(art, 7, Rect::new(x - 1.0, y - 14.0, 34.0, 16.0), WHITE, 1.0),
+            Tile::Chomper => {
+                let closing = game.tick % 120 < 22;
+                let gap = if closing { 1.0 } else { 28.0 };
+                draw_rectangle(
+                    x + 4.0,
+                    y - 58.0,
+                    24.0,
+                    58.0 - gap,
+                    Color::from_rgba(91, 83, 76, 255),
+                );
+                draw_triangle(
+                    vec2(x + 4.0, y - gap),
+                    vec2(x + 28.0, y - gap),
+                    vec2(x + 16.0, y - gap + 5.0),
+                    Color::from_rgba(198, 188, 164, 255),
+                );
+                draw_rectangle(
+                    x + 3.0,
+                    y - 2.0,
+                    26.0,
+                    3.0,
+                    Color::from_rgba(144, 126, 99, 255),
+                );
+            }
             Tile::Opener | Tile::Closer => {
                 let tint = if runtime.pressed {
                     Color::new(1.0, 0.72, 0.32, 0.7)
@@ -275,6 +299,23 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
                 Color::new(0.06, 0.04, 0.025, 0.9),
             ),
             _ => {}
+        }
+    }
+    for point in &game.level.save_points {
+        if point.room == room {
+            let x = (point.tile % COLS) as f32 * 32.0 + 16.0;
+            let y = floor_y(point.tile / COLS);
+            let blue = Color::new(0.55, 0.85, 1.0, 0.9);
+            draw_circle(x, y - 23.0, 3.0, blue);
+            draw_line(
+                x,
+                y - 18.0,
+                x,
+                y - 2.0,
+                0.5,
+                Color::new(0.55, 0.85, 1.0, 0.25),
+            );
+            crate::draw_crisp_text("SAVE", x - 8.0, y - 29.0, 6.0, blue);
         }
     }
     for guard in &game.guards {
@@ -409,7 +450,9 @@ pub fn draw_scene(art: &Art, game: &Game, previous: &Player, alpha: f32, animati
                 && (floor_y(index / COLS) - p.y).abs() < 8.0
                 && ((index % COLS) as f32 * 32.0 + 16.0 - p.x).abs() < 44.0
         });
-    let hint = if nearby_sword {
+    let hint = if game.at_save_point() {
+        "SAVE shrine: open Save / Load to keep your progress."
+    } else if nearby_sword {
         "Hold A / Z / SHIFT near the sword to pick it up"
     } else if nearby_guard && p.sword {
         "Z / SHIFT: Strike   X / UP: Block - time it to parry"

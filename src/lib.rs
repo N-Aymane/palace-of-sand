@@ -1,6 +1,8 @@
 //! Fixed-step dungeon simulation. Graphics and browser code live in the binary.
+pub mod campaign;
 pub mod level;
 use level::{COLS, Level, ROOM_H, ROOM_W, TILE_H, TILE_W, Tile, floor_y, tile_center};
+use serde::{Deserialize, Serialize};
 
 pub const DT: f32 = 1.0 / 60.0;
 const HEIGHT: f32 = 38.0;
@@ -17,7 +19,7 @@ pub struct Input {
     pub action: bool,
     pub parry: bool,
 }
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum PlayerState {
     Idle,
     Running,
@@ -58,7 +60,7 @@ pub enum Event {
     Death,
     Complete,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Player {
     pub room: u8,
     pub x: f32,
@@ -82,7 +84,7 @@ pub struct Player {
     coyote_ticks: u8,
     jump_buffer: u8,
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Guard {
     pub room: u8,
     pub x: f32,
@@ -93,7 +95,7 @@ pub struct Guard {
     pub cooldown: u16,
     pub hurt: u16,
 }
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, Serialize, Deserialize)]
 pub struct TileRuntime {
     pub removed: bool,
     pub consumed: bool,
@@ -123,6 +125,7 @@ pub struct Game {
 impl Game {
     pub fn new(level: Level) -> Self {
         let start = level.start;
+        let armed_start = level.armed_start;
         let guards = level
             .rooms
             .iter()
@@ -151,7 +154,7 @@ impl Game {
                 facing: start.facing,
                 state: PlayerState::Falling,
                 health: 3,
-                sword: false,
+                sword: armed_start,
                 grounded: false,
                 state_ticks: 0,
                 invulnerable: 0,
@@ -182,6 +185,29 @@ impl Game {
     }
     pub fn restart(&mut self) {
         *self = Self::new(self.level.clone());
+    }
+    /// Saving is allowed only at a stable shrine, away from living opponents.
+    pub fn at_save_point(&self) -> bool {
+        self.phase == Phase::Playing
+            && self.player.grounded
+            && self.player.health > 0
+            && self.floor_index().is_some_and(|index| {
+                matches!(
+                    self.tile(self.player.room, index),
+                    Tile::Floor | Tile::Pillar | Tile::Torch
+                )
+            })
+            && self.level.save_points.iter().any(|point| {
+                point.room == self.player.room
+                    && (tile_center(point.tile) - self.player.x).abs() <= 24.0
+                    && (floor_y(point.tile / COLS) - self.player.y).abs() < 1.0
+            })
+            && !self.guards.iter().any(|guard| {
+                guard.health > 0
+                    && guard.room == self.player.room
+                    && (guard.y - self.player.y).abs() < HEIGHT
+                    && (guard.x - self.player.x).abs() < 100.0
+            })
     }
     /// A repeatable sword-training encounter; the campaign still starts unarmed.
     pub fn start_duel(&mut self) {
@@ -834,6 +860,7 @@ impl Game {
                     self.hurt(1);
                 }
             }
+            Tile::Chomper if self.tick % 120 < 22 => self.hurt(1),
             Tile::Potion if action && !self.runtime(room, index).consumed => {
                 self.player.health = (self.player.health + 1).min(3);
                 self.tiles[usize::from(room) - 1][index].consumed = true;

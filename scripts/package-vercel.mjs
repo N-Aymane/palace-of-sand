@@ -2,6 +2,9 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 if(!existsSync('dist/game.wasm')||!existsSync('dist/build.json'))throw new Error('build or download the verified dist/ artifact first');
 mkdirSync('.vercel/output/static',{recursive:true});
+mkdirSync('.vercel/output/functions/api/checkpoint.func',{recursive:true});
+cpSync('server/checkpoint.mjs','.vercel/output/functions/api/checkpoint.func/index.mjs');
+writeFileSync('.vercel/output/functions/api/checkpoint.func/.vc-config.json',JSON.stringify({runtime:'nodejs24.x',handler:'index.mjs',launcherType:'Nodejs',shouldAddHelpers:false,maxDuration:10}));
 cpSync('dist/','.vercel/output/static/',{recursive:true});
 writeFileSync('.vercel/output/config.json',JSON.stringify({version:3,routes:[
   {src:'/(.*)',headers:{'X-Content-Type-Options':'nosniff','Referrer-Policy':'strict-origin-when-cross-origin'},continue:true},

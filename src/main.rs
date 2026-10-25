@@ -1,6 +1,7 @@
 //! Pixel renderer and browser/native platform adapter.
 use macroquad::audio::{Sound, load_sound_from_bytes, play_sound_once};
 use macroquad::prelude::*;
+use palace_of_sand::campaign::{self, Checkpoint, TITLES};
 use palace_of_sand::level::Level;
 use palace_of_sand::{DT, Event, Game, Input, Phase};
 mod visual;
@@ -101,7 +102,7 @@ fn tone(notes: &[f32], duration: f32, volume: f32) -> Vec<u8> {
 
 #[macroquad::main(conf)]
 async fn main() {
-    let level = match Level::opening() {
+    let level = match Level::campaign(0) {
         Ok(l) => l,
         Err(error) => loop {
             clear_background(INK);
@@ -110,6 +111,7 @@ async fn main() {
         },
     };
     let mut game = Game::new(level);
+    let mut chapter = 0usize;
     let art = match Art::load().await {
         Ok(art) => art,
         Err(error) => loop {
@@ -139,6 +141,7 @@ async fn main() {
     let mut pending_up = false;
     let mut pending_action = false;
     let mut pending_parry = false;
+    let mut last_status = None;
     macroquad::logging::info!("PALACE_GRAPHICS_READY");
     loop {
         let touch_layout = screen_width() / screen_height() < 1.45;
@@ -182,13 +185,70 @@ async fn main() {
         if is_key_pressed(KeyCode::M) || hit(Rect::new(269.0, 0.0, 22.0, 13.0)) {
             muted = !muted;
         }
+        if screen != Screen::Playing || game.phase != Phase::Playing {
+            for (key, index) in [
+                (KeyCode::Key1, 0),
+                (KeyCode::Key2, 1),
+                (KeyCode::Key3, 2),
+                (KeyCode::Key4, 3),
+            ] {
+                if is_key_pressed(key) {
+                    if let Ok(level) = Level::campaign(index) {
+                        chapter = index;
+                        game = Game::new(level);
+                        previous = game.player.clone();
+                        accumulator = 0.0;
+                        screen = Screen::Playing;
+                        if !audio_attempted {
+                            audio = Audio::new().await;
+                            audio_attempted = true;
+                        }
+                    }
+                }
+            }
+        }
         if is_key_pressed(KeyCode::T) {
+            chapter = 0;
+            game = Game::new(Level::campaign(0).expect("validated opening"));
             game.start_duel();
             screen = Screen::Playing;
             accumulator = 0.0;
             if !audio_attempted {
                 audio = Audio::new().await;
                 audio_attempted = true;
+            }
+        }
+        if is_key_pressed(KeyCode::S) {
+            match Checkpoint::capture(chapter, &game) {
+                Ok(data) => {
+                    screen = Screen::Paused;
+                    macroquad::logging::info!("PALACE_SAVE:{}", data);
+                }
+                Err(message) => macroquad::logging::info!("PALACE_NOTICE:{}", message),
+            }
+        }
+        if is_key_pressed(KeyCode::L) {
+            screen = Screen::Paused;
+            // The browser adapter supplies this virtual file from the sealed local slot.
+            match load_file("/palace/checkpoint").await {
+                Ok(bytes) => match std::str::from_utf8(&bytes)
+                    .map_err(|e| e.to_string())
+                    .and_then(Checkpoint::restore)
+                {
+                    Ok((index, restored)) => {
+                        chapter = index;
+                        game = restored;
+                        previous = game.player.clone();
+                        accumulator = 0.0;
+                        macroquad::logging::info!(
+                            "PALACE_NOTICE:Checkpoint restored. Press Play to resume."
+                        );
+                    }
+                    Err(message) => macroquad::logging::info!("PALACE_NOTICE:{}", message),
+                },
+                Err(_) => macroquad::logging::info!(
+                    "PALACE_NOTICE:No readable checkpoint. Open Save / Load for details."
+                ),
             }
         }
         if is_key_pressed(KeyCode::R) || hit(Rect::new(240.0, 0.0, 26.0, 13.0)) {
@@ -215,7 +275,15 @@ async fn main() {
                 || is_key_pressed(KeyCode::Space)
                 || hit(Rect::new(90.0, 125.0, 140.0, 23.0))
             {
-                if game.phase != Phase::Playing {
+                if game.phase == Phase::Complete {
+                    if let Ok(Some((index, next))) = campaign::advance(chapter, &game) {
+                        chapter = index;
+                        game = next;
+                    } else {
+                        chapter = 0;
+                        game = Game::new(Level::campaign(0).expect("validated opening"));
+                    }
+                } else if game.phase == Phase::Dead {
                     game.restart();
                 }
                 screen = Screen::Playing;
@@ -302,6 +370,11 @@ async fn main() {
                 0.0
             },
         );
+        let status = (chapter, game.at_save_point());
+        if last_status != Some(status) {
+            macroquad::logging::info!("PALACE_STATUS:{}:{}", chapter + 1, game.at_save_point());
+            last_status = Some(status);
+        }
         set_camera(&Camera2D {
             render_target: Some(target.clone()),
             ..Camera2D::from_display_rect(Rect::new(0.0, 0.0, 320.0, virtual_h))
@@ -314,9 +387,9 @@ async fn main() {
             (accumulator / DT).clamp(0.0, 1.0),
             &animation,
         );
-        draw_hud(&game, muted, screen == Screen::Paused);
+        draw_hud(&game, chapter, muted, screen == Screen::Paused);
         if screen != Screen::Playing || game.phase != Phase::Playing {
-            draw_overlay(&game, screen);
+            draw_overlay(&game, chapter, screen);
         }
         if touch_layout {
             draw_touch_controls(input);
@@ -338,7 +411,7 @@ async fn main() {
     }
 }
 
-fn draw_hud(game: &Game, muted: bool, paused: bool) {
+fn draw_hud(game: &Game, chapter: usize, muted: bool, paused: bool) {
     draw_rectangle(0.0, 0.0, 320.0, 13.0, INK);
     draw_line(
         0.0,
@@ -361,7 +434,7 @@ fn draw_hud(game: &Game, muted: bool, paused: bool) {
             },
         );
     }
-    draw_crisp_text("I / THE DUNGEON", 44.0, 9.0, 8.0, GOLD);
+    draw_crisp_text(TITLES[chapter], 44.0, 9.0, 7.0, GOLD);
     let (equipment, equipment_color) = if game.dangerous_fall() {
         ("FALL!", Color::from_rgba(245, 125, 87, 255))
     } else if game.player.sword {
@@ -386,7 +459,7 @@ fn center(text: &str, y: f32, size: f32, color: Color) {
     let width = measure_text(text, None, (size * 4.0) as u16, 0.25).width;
     draw_crisp_text(text, (320.0 - width) / 2.0, y, size, color);
 }
-fn draw_overlay(game: &Game, screen: Screen) {
+fn draw_overlay(game: &Game, chapter: usize, screen: Screen) {
     draw_rectangle(
         0.0,
         13.0,
@@ -406,10 +479,26 @@ fn draw_overlay(game: &Game, screen: Screen) {
         )
     } else if game.phase == Phase::Complete {
         (
-            "THE FIRST DOOR OPENS",
-            "Into the light",
-            "The dungeon is behind you. The story has begun.",
-            "PLAY AGAIN",
+            if chapter + 1 < TITLES.len() {
+                "ANOTHER DOOR OPENS"
+            } else {
+                "THE PALACE IS BEHIND YOU"
+            },
+            if chapter + 1 < TITLES.len() {
+                "The journey continues"
+            } else {
+                "Into the light"
+            },
+            if chapter + 1 < TITLES.len() {
+                TITLES[chapter + 1]
+            } else {
+                "All four chapters completed."
+            },
+            if chapter + 1 < TITLES.len() {
+                "NEXT LEVEL"
+            } else {
+                "PLAY AGAIN"
+            },
         )
     } else {
         match screen {

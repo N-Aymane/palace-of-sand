@@ -25,7 +25,7 @@ copyFileSync(join(root,'target/wasm32-unknown-unknown/release/palace-of-sand.was
 const gl=readFileSync(join(dirname(miniquad.manifest_path),'js/gl.js'),'utf8');
 const audio=readFileSync(join(dirname(sound.manifest_path),'js/audio.js'),'utf8');
 writeFileSync(join(dist,'mq.js'),gl+'\n;(function(){\n'+audio+'\n})();\n');
-for(const file of ['index.html','style.css','shell.js','favicon.svg']) copyFileSync(join(root,'web',file),join(dist,file));
+for(const file of ['index.html','style.css','shell.js','checkpoint.js','favicon.svg']) copyFileSync(join(root,'web',file),join(dist,file));
 cpSync(join(root,'assets/art'),join(dist,'art'),{recursive:true});
-writeFileSync(join(dist,'build.json'),JSON.stringify({version:'0.5.2',graphics:'cinematic-raster',macroquad:'0.4.14',wasmSha256:createHash('sha256').update(readFileSync(join(dist,'game.wasm'))).digest('hex')},null,2));
+writeFileSync(join(dist,'build.json'),JSON.stringify({version:'0.6.0',graphics:'cinematic-raster',macroquad:'0.4.14',wasmSha256:createHash('sha256').update(readFileSync(join(dist,'game.wasm'))).digest('hex')},null,2));
 console.log('Static WebAssembly bundle ready in dist/');

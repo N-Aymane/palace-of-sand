@@ -92,12 +92,39 @@ pub struct Room {
 pub struct Level {
     pub start: Start,
     pub rooms: Vec<Room>,
+    #[serde(default)]
+    pub armed_start: bool,
+    #[serde(default)]
+    pub save_points: Vec<Location>,
 }
 impl Level {
     /// Loads and validates the embedded opening level before gameplay begins.
     pub fn opening() -> Result<Self, String> {
         let level: Self = serde_json::from_str(include_str!("../assets/opening.json"))
             .map_err(|e| format!("invalid level JSON: {e}"))?;
+        level.validate()?;
+        Ok(level)
+    }
+    /// The first chapter follows the DOS layout; later chapters are original designs.
+    pub fn campaign(chapter: usize) -> Result<Self, String> {
+        if chapter == 0 {
+            let mut level = Self::opening()?;
+            level.save_points = vec![
+                Location { room: 2, tile: 14 },
+                Location { room: 11, tile: 23 },
+                Location { room: 15, tile: 21 },
+                Location { room: 9, tile: 15 },
+            ];
+            level.validate()?;
+            return Ok(level);
+        }
+        let source = match chapter {
+            1 => include_str!("../assets/courtyard.json"),
+            2 => include_str!("../assets/cistern.json"),
+            3 => include_str!("../assets/palace.json"),
+            _ => return Err("unknown chapter".into()),
+        };
+        let level: Self = serde_json::from_str(source).map_err(|e| e.to_string())?;
         level.validate()?;
         Ok(level)
     }
@@ -153,6 +180,18 @@ impl Level {
             || ![-1, 1].contains(&self.start.facing)
         {
             return Err("invalid start".into());
+        }
+        for point in &self.save_points {
+            if point.room == 0
+                || usize::from(point.room) > self.rooms.len()
+                || point.tile >= 30
+                || !matches!(
+                    self.tile(point.room, point.tile),
+                    Tile::Floor | Tile::Pillar | Tile::Torch
+                )
+            {
+                return Err("save point must be on a stable floor".into());
+            }
         }
         Ok(())
     }

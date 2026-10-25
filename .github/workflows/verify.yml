@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 jobs:
-  verify:
+  simulation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -17,10 +17,19 @@ jobs:
           rustup default stable
           rustup target add wasm32-unknown-unknown
       - run: cargo fmt --check
-      - id: simulation
-        continue-on-error: true
-        run: cargo test --locked --lib --tests
+      - run: node --test scripts/test-checkpoint.mjs
+      - run: cargo test --locked --lib --tests
       - run: cargo clippy --locked --lib -- -D warnings
+  verify:
+    needs: simulation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Prepare Rust
+        run: |
+          rustup toolchain install stable --profile minimal --component clippy
+          rustup default stable
+          rustup target add wasm32-unknown-unknown
       - run: cargo clippy --locked --target wasm32-unknown-unknown --features renderer -- -D warnings
       - id: build
         run: node scripts/build.mjs
@@ -40,6 +49,3 @@ jobs:
         with:
           name: browser-verification
           path: test-results/
-      - name: Require simulation success
-        if: always() && steps.simulation.outcome != 'success'
-        run: exit 1
