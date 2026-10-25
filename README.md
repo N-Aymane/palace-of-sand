@@ -1,6 +1,6 @@
 # Palace of Sand
 
-A Rust/WebAssembly recreation of the opening dungeon from DOS Prince of Persia, with original cinematic raster artwork and animated character sheets and synthesized sound. Desktop keyboard and mobile touch controls. Static hosting on Vercel.
+A Rust/WebAssembly cinematic platformer with the DOS opening dungeon and three original follow-on chapters, original artwork and synthesized sound. Desktop keyboard and mobile touch controls. Hosted on Vercel with a small server function for code-protected shrine saves.
 
 Play: https://palace-of-sand.vercel.app
 
@@ -27,6 +27,7 @@ Arrow keys move, jump/climb, and crouch. Shift is careful step / grab / pickup /
 - [Milestones](docs/PROGRESS.md)
 - [Reference evidence and fidelity](docs/REFERENCES.md)
 - [Architecture](docs/ARCHITECTURE.md)
+- [Save shrines and four-chapter campaign](docs/SAVES-AND-CAMPAIGN.md)
 - [Local preview and deployment](docs/DEPLOYMENT.md)
 
 This is an unofficial fan project. Newly authored code and artwork are MIT licensed; reference material retains its original ownership. No original executable, graphics, or sound files are distributed.

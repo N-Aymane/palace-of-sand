@@ -31,7 +31,10 @@ try {
       // Capture the live canvas without waiting for its animation loop to become stable.
       const captureCanvas=async()=>page.screenshot({clip:await page.locator('canvas').boundingBox(),timeout:60000});
       page.on('pageerror',e=>{errors.push(e.message);logs.push(e.stack);});
-      page.on('console',m=>{logs.push(`${m.type()}: ${m.text()}`);if(m.type()==='error')errors.push(m.text());});
+      page.on('console',m=>{logs.push(`${m.type()}: ${m.text()}`);
+        // A wrong unlock code deliberately returns 401 and is asserted in the UI below.
+        const expectedDenial=m.location().url.includes('/api/checkpoint')&&m.text().includes('401');
+        if(m.type()==='error'&&!expectedDenial)errors.push(m.text());});
       const response=await page.goto(url);assert.equal(response.status(),200);
       await page.waitForFunction(()=>document.querySelector('#loading').classList.contains('hidden'),{timeout:30000});
       await page.waitForTimeout(400);
