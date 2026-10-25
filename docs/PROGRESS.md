@@ -149,3 +149,9 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Replaced the small canvas-with-controls presentation on touch devices with a full-height webview shell, safe-area padding, a separate game screen, and a bottom-mounted handheld control deck.
 - Added a physical-style direction pad and A/action and B/parry buttons. Pointer capture supports simultaneous controls and releases held inputs on cancellation, focus loss and orientation changes. All gameplay remains in Rust; the adapter only sends existing keyboard inputs.
 - Gameplay keeps its 8:5 aspect ratio; the mobile deck fills the rest of the screen without stretching the game or requiring page scrolling. Added portrait/landscape viewport and control-placement browser assertions.
+
+### Safe falls (requested during mobile work)
+
+- Removed all height-based landing damage on ordinary floors. Spikes, blades and combat retain their explicit damage rules.
+- Unmarked gaps below an unconnected room now return the player to the last safe floor without losing health instead of killing them.
+- Added regression cases for a high-speed long fall at one health, a multi-room drop, a spike landing, and recovery from an unmarked bottom gap. Release version: 0.4.0.

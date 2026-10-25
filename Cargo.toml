@@ -1,6 +1,6 @@
 [package]
 name = "palace-of-sand"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.85"
 description = "A Rust and WebAssembly cinematic dungeon platformer"

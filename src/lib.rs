@@ -115,6 +115,7 @@ pub struct Game {
     previous: Input,
     attack_hit: bool,
     attack_buffer: u8,
+    safe_floor: Option<(u8, usize)>,
 }
 impl Game {
     pub fn new(level: Level) -> Self {
@@ -172,6 +173,7 @@ impl Game {
             previous: Input::default(),
             attack_hit: false,
             attack_buffer: 0,
+            safe_floor: None,
         }
     }
     pub fn restart(&mut self) {
@@ -550,6 +552,13 @@ impl Game {
         }
         self.interact(input, action);
         self.update_guards();
+        if self.player.grounded && self.phase == Phase::Playing {
+            if let Some(index) = self.floor_index() {
+                if Self::safe_tile(self.tile(self.player.room, index)) {
+                    self.safe_floor = Some((self.player.room, index));
+                }
+            }
+        }
         if self.elapsed_ticks >= 60 * 60 * 60 {
             self.die();
         }
@@ -648,15 +657,11 @@ impl Game {
                         } else {
                             0
                         };
-                        let distance = self.player.fall_distance;
                         self.player.fall_distance = 0.0;
                         self.set_state(PlayerState::Idle);
                         self.events.push(Event::Land);
-                        if distance > 170.0 {
-                            self.hurt(3);
-                        } else if distance > 110.0 {
-                            self.hurt(1);
-                        }
+                        // Ordinary landings are safe at every height. Tile hazards
+                        // remain responsible for damage after landing.
                         break;
                     }
                 }
@@ -693,6 +698,27 @@ impl Game {
             self.events.push(Event::Crumble);
         }
     }
+    fn safe_tile(tile: Tile) -> bool {
+        tile.supports() && !matches!(tile, Tile::Spikes | Tile::Chomper | Tile::Loose | Tile::Wall | Tile::Gate)
+    }
+    fn recover_from_void(&mut self) {
+        let destination = self.safe_floor.filter(|&(room, index)| Self::safe_tile(self.tile(room, index)))
+            .or_else(|| self.level.rooms.iter().find_map(|room| {
+                (0..30).find(|&index| Self::safe_tile(self.tile(room.id, index))).map(|index| (room.id, index))
+            }));
+        if let Some((room, index)) = destination {
+            self.player.room = room;
+            self.player.x = tile_center(index);
+            self.player.y = floor_y(index / COLS);
+            self.player.vx = 0.0;
+            self.player.vy = 0.0;
+            self.player.fall_distance = 0.0;
+            self.player.grounded = true;
+            self.player.landing_ticks = 8;
+            self.set_state(PlayerState::Idle);
+            self.events.push(Event::Land);
+        }
+    }
     fn cross_rooms(&mut self) {
         let direction = if self.player.x < 0.0 {
             Some(0)
@@ -711,7 +737,7 @@ impl Game {
         let next = self.level.room(self.player.room).links[dir];
         if next == 0 {
             if dir == 3 {
-                self.die();
+                self.recover_from_void();
             } else {
                 self.player.x = self.player.x.clamp(6.0, ROOM_W - 6.0);
                 self.player.vx = 0.0;
@@ -1146,6 +1172,71 @@ mod tests {
         g.guards[0].x = g.player.x + 50.0;
         g.step(Input::default());
         assert_eq!(g.guards[0].health, 2, "active window lasts past tick eight");
+    }
+    #[test]
+    fn long_falls_on_plain_stone_do_not_damage_even_at_one_health() {
+        let mut g = game();
+        g.guards.clear();
+        g.level.rooms[0].rows = ["          ".into(), "          ".into(), "..........".into()];
+        g.player.room = 1;
+        g.player.x = 16.0;
+        g.player.y = 0.0;
+        g.player.vy = 450.0;
+        g.player.grounded = false;
+        g.player.health = 1;
+        g.player.fall_distance = 500.0;
+        for _ in 0..60 { g.step(Input::default()); }
+        assert_eq!(g.phase, Phase::Playing);
+        assert_eq!(g.player.health, 1);
+        assert!(g.player.grounded);
+        assert_eq!(g.player.y, floor_y(2));
+    }
+    #[test]
+    fn long_drop_between_rooms_is_safe_on_normal_floor() {
+        let mut g = game();
+        g.guards.clear();
+        g.level.rooms[0].rows = ["          ".into(), "          ".into(), "          ".into()];
+        g.level.rooms[0].links[3] = 2;
+        g.level.rooms[1].rows = ["          ".into(), "          ".into(), "..........".into()];
+        g.player.x = 16.0;
+        g.player.y = 180.0;
+        g.player.vy = 300.0;
+        g.player.grounded = false;
+        for _ in 0..90 { g.step(Input::default()); }
+        assert_eq!(g.player.room, 2);
+        assert_eq!(g.player.health, 3);
+        assert_eq!(g.phase, Phase::Playing);
+        assert!(g.player.grounded);
+    }
+    #[test]
+    fn falling_onto_spikes_is_still_lethal() {
+        let mut g = game();
+        g.guards.clear();
+        g.level.rooms[0].rows = ["          ".into(), "          ".into(), "s.........".into()];
+        g.player.x = 16.0;
+        g.player.y = 0.0;
+        g.player.vy = 450.0;
+        g.player.grounded = false;
+        for _ in 0..60 { g.step(Input::default()); }
+        assert_eq!(g.phase, Phase::Dead);
+    }
+    #[test]
+    fn unmarked_bottom_gap_recovers_to_last_safe_floor_without_damage() {
+        let mut g = game();
+        g.guards.clear();
+        place(&mut g, 3, 12);
+        g.step(Input::default());
+        let safe = g.safe_floor.expect("safe floor recorded");
+        g.player.room = 1;
+        g.level.rooms[0].links[3] = 0;
+        g.player.y = ROOM_H + 11.0;
+        g.player.grounded = false;
+        g.cross_rooms();
+        assert_eq!(g.player.room, safe.0);
+        assert_eq!(g.player.x, tile_center(safe.1));
+        assert_eq!(g.player.health, 3);
+        assert_eq!(g.phase, Phase::Playing);
+        assert!(g.player.grounded);
     }
     #[test]
     fn jump_returns_to_floor() {
