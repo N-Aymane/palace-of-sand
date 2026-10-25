@@ -28,3 +28,9 @@ Design choices, not DOS measurements: simulation at 60 Hz; run speed 100 pixels/
 ## Accessible fall rules (v0.4.0)
 
 At the user's request, ordinary landings no longer inflict damage based on drop height. Falling below a room without a lower connection recovers to the last safe supporting floor without health loss. Explicit hazards retain their own damage behavior. This intentionally differs from the original DOS fall-damage rules.
+
+## Clarified damage and pickup rules (v0.5.0)
+
+The user revised the accessible fall rule: drops exceeding 378 logical pixels (two room heights / six floor levels) now kill, while smaller drops remain safe. Spikes remove one heart per contact, can remove the final heart, and do not repeatedly drain health while standing on the same tile. These are tuning choices, not copied DOS damage values.
+
+Sword pickup now uses held action or a ten-tick input buffer and a 28-pixel same-floor reach. This intentionally removes the exact-tile/fresh-press requirement that made approach-and-hold input unreliable. The sword is consumed once without removing its supporting floor, and a visible SWORD READY cue confirms collection.

@@ -2,10 +2,10 @@
 
 ## Controls
 
-- Find and pick up the sword with Shift in the campaign, or choose **Sword practice** / press **T** for an immediate armed duel.
+- Hold Shift/Z or mobile A near the sword to pick it up in the campaign, or choose **Sword practice** / press **T** for an immediate armed duel.
 - **Z / Shift**: strike. Hold to repeat; a tap during the last ten ticks of recovery queues a follow-up.
 - **X**: raise defence. **Up** also defends when an armed guard is nearby, retaining its normal jump/climb role elsewhere.
-- **Touch**: use the dedicated **ATTACK** and **PARRY** buttons. The action button still performs pickups/grabs outside fighting.
+- **Touch**: use **A / ATTACK-ACTION** and **B / PARRY** on the handheld deck. The action button still performs pickups/grabs outside fighting.
 - Moving away from a nearby opponent retreats while keeping the blade facing them.
 
 ## Rules

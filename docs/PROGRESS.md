@@ -177,3 +177,13 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - User asked to continue improving the game. Added permanent NO SWORD / ARMED status to make weapon collection unambiguous after the pickup cue fades.
 - Added a steady FALL! warning before a drop crosses the lethal threshold, with an actual multi-room falling replay verifying that the warning appears before death and clears afterward.
 - v0.5.0 passed 32 gameplay tests, strict lint, release WASM and five browser scenarios (run `40197719983`). This follow-up polish is v0.5.1.
+
+- Promoted the verified v0.5.0 bundle to https://palace-of-sand.vercel.app. Public portrait and landscape touch checks passed. Local port 4173 serves the same gameplay fixes while the feedback polish build is verified.
+
+### Verified feedback-polish release
+
+- v0.5.1, source `d840e9e`, passed run `40213901337`: 32 focused tests plus the complete campaign replay, formatting, strict library/WASM Clippy, release compilation and all five desktop/portrait/landscape Chromium/WebKit scenarios.
+- Added permanent equipment status and a steady warning during dangerously long falls. The HUD uses already-prewarmed font sizes, preserving the high-density renderer and touch layout.
+- Promoted deployment `dpl_JC36YJbC5TKZ7pcJpj6KXNGoqtH9` to https://palace-of-sand.vercel.app. Verified artifact SHA-256: `d360a199bc699a6488c3b2a0d6c2bf49bb0257ae1251678bda741eb4f8e59ccf`.
+
+- Public v0.5.1 portrait and landscape touch/combat checks passed. Production metadata matches the tested artifact exactly. All code, controls and release documentation are pushed to the GitHub repository.
