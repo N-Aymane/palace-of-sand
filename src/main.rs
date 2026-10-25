@@ -224,7 +224,9 @@ async fn main() {
                     screen = Screen::Paused;
                     macroquad::logging::info!("PALACE_SAVE:{}", data);
                 }
-                Err(message) => macroquad::logging::info!("PALACE_NOTICE:{}", message),
+                Err(message) => {
+                    macroquad::logging::info!("PALACE_NOTICE:{}", message);
+                }
             }
         }
         if is_key_pressed(KeyCode::L) {
@@ -244,11 +246,15 @@ async fn main() {
                             "PALACE_NOTICE:Checkpoint restored. Press Play to resume."
                         );
                     }
-                    Err(message) => macroquad::logging::info!("PALACE_NOTICE:{}", message),
+                    Err(message) => {
+                        macroquad::logging::info!("PALACE_NOTICE:{}", message);
+                    }
                 },
-                Err(_) => macroquad::logging::info!(
-                    "PALACE_NOTICE:No readable checkpoint. Open Save / Load for details."
-                ),
+                Err(_) => {
+                    macroquad::logging::info!(
+                        "PALACE_NOTICE:No readable checkpoint. Open Save / Load for details."
+                    );
+                }
             }
         }
         if is_key_pressed(KeyCode::R) || hit(Rect::new(240.0, 0.0, 26.0, 13.0)) {

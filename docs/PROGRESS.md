@@ -204,3 +204,4 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Added code unlock dialog, save/load bridge through the Macroquad filesystem plugin, stable save markers and a timed chomper trap.
 - Added API authorization/tamper tests, checkpoint roundtrip tests, campaign transition tests and input-only playthroughs. Full verification is pending CI.
 - First campaign replay exposed a lethal uncareful walk across Palace spikes. Updated the input-only route to jump over marked hazards before engaging guards; no teleport or damage bypass is used. Added browser save/unlock/load/reload verification.
+- All campaign routes and native checkpoint tests passed. Corrected Macroquad logging macro statement placement flagged by strict WASM compilation.
