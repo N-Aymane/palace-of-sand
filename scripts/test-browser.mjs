@@ -15,6 +15,7 @@ const results=[];
 try {
   for(const scenario of [
     {name:'desktop-chromium',engine:chromium,options:{viewport:{width:1440,height:1100}}},
+    {name:'portrait-chromium',engine:chromium,options:{...devices['Pixel 7'],viewport:{width:393,height:852}}},
     {name:'mobile-chromium',engine:chromium,options:{...devices['Pixel 7'],viewport:{width:915,height:412}}},
     {name:'mobile-webkit',engine:webkit,options:{...devices['iPhone 13'],viewport:{width:844,height:390}}},
     {name:'portrait-webkit',engine:webkit,options:{...devices['iPhone 13']}}
@@ -47,6 +48,18 @@ try {
         assert.ok(layout.deck.top>=layout.canvas.bottom,'controls stay below gameplay');
         assert.ok(layout.deck.bottom>=layout.height-2&&layout.deck.bottom<=layout.height+1,'controls reach bottom of viewport');
         assert.equal(layout.overflow,false,'no vertical page scroll in handheld mode');
+        if(scenario.engine===chromium){
+          const session=await context.newCDPSession(page);
+          const points=await Promise.all(['ArrowRight','KeyZ'].map(async key=>{
+            const b=await page.locator(`[data-key=${key}]`).boundingBox();return {x:b.x+b.width/2,y:b.y+b.height/2};
+          }));
+          await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:points});
+          assert.equal(await page.locator('[data-key].is-held').count(),2,'simultaneous direction and action');
+          await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+          assert.equal(await page.locator('[data-key].is-held').count(),0,'cancel releases every control');
+          await session.detach();
+        }
+
       }
 
       await page.screenshot({path:`test-results/${scenario.name}-title.png`,fullPage:true});
@@ -64,7 +77,7 @@ try {
         await page.locator('[data-key=ArrowRight]').tap();
       }
       await page.screenshot({path:`test-results/${scenario.name}-controls.png`,fullPage:true});
-      if(scenario.engine===chromium) {
+      if(scenario.engine===chromium&&scenario.name!=='portrait-chromium') {
         const combatStart=logs.length;
         const waitCombat=async(predicate,message)=>{
           for(let i=0;i<600;i++) {

@@ -155,3 +155,5 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Removed all height-based landing damage on ordinary floors. Spikes, blades and combat retain their explicit damage rules.
 - Unmarked gaps below an unconnected room now return the player to the last safe floor without losing health instead of killing them.
 - Added regression cases for a high-speed long fall at one health, a multi-room drop, a spike landing, and recovery from an unmarked bottom gap. Release version: 0.4.0.
+
+- Local desktop and landscape touch layout/combat checks passed. Added explicit portrait Chromium sizing and simultaneous direction/action cancellation checks alongside the existing WebKit portrait/landscape checks.
