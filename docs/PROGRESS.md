@@ -209,3 +209,11 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Visual inspection confirmed chapter selection works and exposed a shrine marker obscured by the standing hero. Moved its orb and SAVE label above head height.
 - The staged Vercel API rejected locked saving, accepted the private code and roundtripped an actual Rust checkpoint. Local desktop/portrait/landscape Chromium checks passed. Added mobile dialog bounds checks and 16px form fields to avoid Safari focus zoom.
 - Chromium desktop and both mobile orientations passed in CI, but WebKit timed out at startup. Added startup console/screenshot diagnostics and split browser scenarios into independent jobs to diagnose and fix the issue before promotion.
+
+### Verified four-chapter release
+
+- Run `40220708381` passed: 36 Rust gameplay/checkpoint tests, three API tests, strict native/WASM lint, release build and all five independent Chromium/WebKit browser scenarios.
+- Early sequential WebKit startup timed out; independent browser jobs passed both WebKit orientations and provide per-scenario console/screenshot diagnostics.
+- Promoted v0.6.0 deployment `dpl_9sikTnCe79yfw4SMTkeu7xC3xd75`. The public WASM digest matches the CI artifact: `bc77eab1d3eb8b30e55b9f54f0f19f2086be4f2b901b3673b14fc7e638d0e482`.
+- Local port 4173 now serves the final campaign and save feature. The original Dungeon plus Courtyard, Cistern and Palace provide 39 rooms in total. Later maps are original designs inspired by the DOS mechanics.
+- Public desktop and portrait browser checks passed after promotion, including protected saving and checkpoint restoration after a full page reload.

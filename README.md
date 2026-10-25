@@ -24,6 +24,8 @@ Arrow keys move, jump/climb, and crouch. Shift is careful step / grab / pickup /
 
 ## Project record
 
+Open **Save / Load** to select any of the four chapters or restore a checkpoint. Stand at a blue **SAVE** shrine and enter the private access code to save. The code is verified on the server; one checkpoint stays on the same browser and address. Clearing site data removes it. Completing a chapter unlocks the next-level screen.
+
 - [Milestones](docs/PROGRESS.md)
 - [Reference evidence and fidelity](docs/REFERENCES.md)
 - [Architecture](docs/ARCHITECTURE.md)

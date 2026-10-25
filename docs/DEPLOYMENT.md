@@ -76,3 +76,12 @@ Production: https://palace-of-sand.vercel.app, deployment `dpl_JC36YJbC5TKZ7pcJp
 - Deployment: dpl_7Bv3ta9THzTiGmcxomRVWP5HdUGM, promoted to https://palace-of-sand.vercel.app.
 - WASM SHA-256: 0015c08df5e1f92e9a7bbf2c144cc79b52d10f6530e1017d8b66d1167f77855f. Public build metadata matches the verified bundle. Local port 4173 serves the same release.
 
+
+## Campaign and protected checkpoint release — v0.6.0
+
+Source `36a7088`, run `40220708381`: formatting, strict native/WASM Clippy, 36 Rust tests (including controls-only routes through all four chapters), three HTTP authorization/envelope tests, release WASM, and all five independent browser scenarios passed. Portrait and landscape WebKit also passed the mobile save-menu checks.
+
+Production deployment `dpl_9sikTnCe79yfw4SMTkeu7xC3xd75` is promoted to https://palace-of-sand.vercel.app. WASM SHA-256: `bc77eab1d3eb8b30e55b9f54f0f19f2086be4f2b901b3673b14fc7e638d0e482`. Public metadata matches the verified bundle, and local port 4173 serves that same bundle.
+
+The release includes a Node 24 checkpoint function. `SAVE_ACCESS_CODE` and `SAVE_SIGNING_KEY` are configured as server-only production secrets. Their values are deliberately excluded from Git and documentation. A staged Vercel API check rejected locked saving, accepted the private code, and roundtripped an actual Rust checkpoint. See `SAVES-AND-CAMPAIGN.md` for operation and recovery details.
+`nPublic post-promotion desktop and portrait Chromium checks passed, including wrong-code rejection, private-code unlock, real Rust save/load and restoration again after a page reload. Mobile save-menu bounds and existing controls also passed.

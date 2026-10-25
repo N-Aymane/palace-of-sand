@@ -34,3 +34,7 @@ At the user's request, ordinary landings no longer inflict damage based on drop 
 The user revised the accessible fall rule: drops exceeding 378 logical pixels (two room heights / six floor levels) now kill, while smaller drops remain safe. Spikes remove one heart per contact, can remove the final heart, and do not repeatedly drain health while standing on the same tile. These are tuning choices, not copied DOS damage values.
 
 Sword pickup now uses held action or a ten-tick input buffer and a 28-pixel same-floor reach. This intentionally removes the exact-tile/fresh-press requirement that made approach-and-hold input unreliable. The sword is consumed once without removing its supporting floor, and a visible SWORD READY cue confirms collection.
+
+## Campaign extension (v0.6.0)
+
+Only Chapter I uses the selected DOS room arrangement. Chapters II–IV are original 4-, 5- and 6-room designs, respectively, assembled around supported combat, pressure plates, gates, spikes, potions and timed chompers. They do not reproduce the original later-level maps or its mirror, shadow, boss and story events. Save shrines, a code-controlled browser checkpoint slot, chapter selection and the four-chapter ending are new features. Original executable/art/audio assets remain excluded.
