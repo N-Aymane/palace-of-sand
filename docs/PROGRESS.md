@@ -171,3 +171,9 @@ The user explicitly asked to implement graphics and physics changes rather than 
 - Spikes remove one heart per contact instead of instant death. Staying on the same spike tile does not repeatedly drain health; leaving and entering again can inflict another hit. A final remaining heart can still be lost.
 - Sword pickup accepts holding action while approaching, a nearby same-floor reach of 28 pixels, and a short pre-landing tap. Collection is recorded once and preserves the supporting floor.
 - Added regression tests for lethal huge falls, repeated spike contact, last-heart spike damage, held/nearby pickup, pre-landing pickup and floor separation.
+
+### Continued gameplay polish
+
+- User asked to continue improving the game. Added permanent NO SWORD / ARMED status to make weapon collection unambiguous after the pickup cue fades.
+- Added a steady FALL! warning before a drop crosses the lethal threshold, with an actual multi-room falling replay verifying that the warning appears before death and clears afterward.
+- v0.5.0 passed 32 gameplay tests, strict lint, release WASM and five browser scenarios (run `40197719983`). This follow-up polish is v0.5.1.

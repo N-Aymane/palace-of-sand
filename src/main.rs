@@ -362,6 +362,15 @@ fn draw_hud(game: &Game, muted: bool, paused: bool) {
         );
     }
     draw_crisp_text("I / THE DUNGEON", 44.0, 9.0, 8.0, GOLD);
+    let (equipment, equipment_color) = if game.dangerous_fall() {
+        ("FALL!", Color::from_rgba(245, 125, 87, 255))
+    } else if game.player.sword {
+        ("ARMED", GOLD)
+    } else {
+        ("NO SWORD", EDGE)
+    };
+    draw_crisp_text(equipment, 112.0, 9.0, 6.0, equipment_color);
+
     let remaining = 3600 - game.elapsed_ticks / 60;
     center(
         &format!("{:02}:{:02}", remaining / 60, remaining % 60),

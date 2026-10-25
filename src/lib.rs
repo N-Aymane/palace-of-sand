@@ -196,6 +196,12 @@ impl Game {
             self.player.state = PlayerState::Combat;
         }
     }
+    /// Warn while there is still time to catch a ledge before a lethal drop.
+    pub fn dangerous_fall(&self) -> bool {
+        self.phase == Phase::Playing
+            && !self.player.grounded
+            && self.player.fall_distance >= FATAL_FALL_DISTANCE * 0.75
+    }
     pub fn runtime(&self, room: u8, tile: usize) -> TileRuntime {
         self.tiles[usize::from(room) - 1][tile]
     }
@@ -1380,6 +1386,38 @@ mod tests {
             ..Input::default()
         });
         assert!(!other.player.sword);
+    }
+    #[test]
+    fn dangerous_drop_warns_before_the_lethal_landing() {
+        let mut g = game();
+        g.guards.clear();
+        for index in 0..3 {
+            g.level.rooms[index].rows = [
+                "          ".into(),
+                "          ".into(),
+                "          ".into(),
+            ];
+        }
+        g.level.rooms[0].links[3] = 2;
+        g.level.rooms[1].links[3] = 3;
+        g.level.rooms[2].rows[2] = "..........".into();
+        g.player.x = 16.0;
+        g.player.y = 0.0;
+        g.player.grounded = false;
+        let mut warned = false;
+        for _ in 0..180 {
+            g.step(Input::default());
+            warned |= g.dangerous_fall();
+            if g.phase == Phase::Dead {
+                break;
+            }
+        }
+        assert!(warned, "warn before the long drop lands");
+        assert_eq!(g.phase, Phase::Dead);
+        assert!(
+            !g.dangerous_fall(),
+            "warning must not linger on the death screen"
+        );
     }
     #[test]
     fn jump_returns_to_floor() {
